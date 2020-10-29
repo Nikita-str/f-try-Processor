@@ -1,5 +1,5 @@
 #pragma once
-
+#include <stdint.h>
 
 enum {PROC_MAX_CMD_LEN = 1};
 
