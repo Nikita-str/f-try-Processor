@@ -1,5 +1,8 @@
 #include "processor.h"
-#include "generic_function.h"
+
+//next here cause when we include processor.h we not want see function from next headers
+#include "Auxiliary/generic_function.h"
+#include "Auxiliary/IN_support.h"
 #define PROCESSOR_CODE
 #include "__processor_utility.h"
 #undef PROCESSOR_CODE
@@ -13,6 +16,8 @@ typedef enum PROC_CMD_ERROR//TODO:MOVE:processor.h
     FUTURE_ERROR = 0x4,//eah.. this for case of cyberpunk
     DIV_ZERO_ERROR = 0x5,
     NO_SUCH_JUMP_IF = 0x6,
+
+    IN_ERROR = 0x7,
 }PROC_CMD_ERROR;
 
 inline PROC_CMD_ERROR processor_next_cmd(Processor proc)
@@ -38,6 +43,8 @@ inline PROC_CMD_ERROR processor_next_cmd(Processor proc)
     #define read_reg() read_type(uint8_t);
     #define read_byte() read_type(uint8_t);
     #define read_iproc() read_type(iproc_t);
+
+    #define get_c_string_ptr() ((char *)(proc.mem.memory + rip));
 
     #define read_double() __d_read_n(proc.mem.memory + rip); rip += sizeof(double);
 
@@ -471,6 +478,66 @@ inline PROC_CMD_ERROR processor_next_cmd(Processor proc)
         goto RETURN;
     }
 
+    case OUT_REG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc.reg);
+        if (pr.reg_bytes)return REG_ERROR;
+
+        int64_t value = (int64_t)get_reg_value(pr);
+        printf("%lld\n", value);
+
+        goto RETURN;
+    }
+
+    case OUT_FREG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(fGP, reg_byte, proc.reg);
+        if (pr.reg_bytes)return REG_ERROR;
+
+        double value = get_f_reg_value(pr);
+        printf("%lf\n", value);
+
+        goto RETURN;
+    }
+
+    case OUT_C_STRING:
+    {
+        uint8_t str_len = read_byte();//TODO:i think 255 it's ok
+
+        char *c_ptr = get_c_string_ptr();
+        printf("%s\n", c_ptr);
+        rip += str_len;
+        goto RETURN;
+    }
+
+    case IN_REG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc.reg);
+        if (pr.reg_bytes)return REG_ERROR;
+
+        int64_t value = 0;
+        if (IN_read_int64(&value))return IN_ERROR; //TODO: or we can try again ....
+        
+        set_reg_value(pr, value);
+        goto RETURN;
+    }
+
+    case IN_FREG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(fGP, reg_byte, proc.reg);
+        if (pr.reg_bytes)return REG_ERROR;
+
+        double value = 0;
+        if (IN_read_double(&value))return IN_ERROR; //TODO: or we can try again ....
+        
+        set_f_reg_value(pr, value);
+        goto RETURN;
+    }
+
     default:
         return NO_SUCH_CMD;
     }
@@ -480,6 +547,8 @@ inline PROC_CMD_ERROR processor_next_cmd(Processor proc)
     #undef read_byte
     #undef read_reg
     #undef read_type
+
+    #undef get_c_string_ptr
 
     #undef read_n
 

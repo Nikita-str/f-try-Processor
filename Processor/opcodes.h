@@ -77,21 +77,27 @@ enum OpCode_1_byte
 
     INC_REG,
     DEC_REG,
+
+    OUT_REG,
+    OUT_FREG,
+    OUT_C_STRING,
+    IN_REG, //64 bit
+    IN_FREG,
 };
 
-//TODO:DEL:?:
+
 enum REG
 {
-     AL = 0b001,
-     AX = 0b010,
+    AL = 0b001,
+    AX = 0b010,
     EAX = 0b011,
     RAX = 0b100,
 
-    BL  = 0b0101,
-    BX  = 0b0110,
+    BL = 0b0101,
+    BX = 0b0110,
     EBX = 0b0111,
     RBX = 0b1000,
-    
+
     CL,
     CX,
     ECX,
@@ -103,7 +109,6 @@ enum REG
     RDX,
 };
 
-//TODO:DEL:?:
 enum FREG
 {
     FAX = 1,
