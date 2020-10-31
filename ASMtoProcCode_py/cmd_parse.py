@@ -351,6 +351,11 @@ def IN_cmd(ops, cmd = ""):
         return ret_cmd(True, [opcodes["IN_FR"], is_reg_1[1]]);
     return ERR_OP_1
 
+def HLT_cmd(ops, cmd = ""):
+    if(cmd != ""): return ERR_CMD
+    if(len(ops) > 0): return TOO_MANY_PARAMS
+    return ret_cmd(True, [opcodes["HLT"]])
+
 cmd_handler = {
     'PUSH' : PUSH_cmd,
     'POP' : POP_cmd,
@@ -369,6 +374,8 @@ cmd_handler = {
 
     'OUT' : OUT_cmd,
     'IN'  : IN_cmd,
+
+    'HLT' : HLT_cmd,
     }
 
 
@@ -399,6 +406,8 @@ def get_cmd_prefix(cmd_name):
     
     if(cmd_name[0:3] == 'DEC'): return [True, 'DEC', cmd_name] #NC
     if(cmd_name[0:3] == 'INC'): return [True, 'INC', cmd_name] #NC
+
+    if(cmd_name[0:3] == 'HLT'): return [True, 'HLT', cmd_name] #NC
     #2:
     if(cmd_name[0:2] == 'IN'): return [True, 'IN', cmd_name] #NC
 

@@ -26,12 +26,26 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
     while line:
         line = line.strip()
         line = line.split(';')[0]
+        line = line.split('//')[0]
         if(len(line) == 0):
             line = asm_file.readline();
             ind_line+=1;
             continue;
-        #line = line.upper()
+
+        str_param = line.split('"')
+        len_str_param = len(str_param)
+        line = str_param[0]
+        if(len_str_param != 3 and len_str_param != 1):
+            print("string error: "+ line+"  line: " + str(ind_line))
+            print('in one line may stay only 0 or 2 char ["] ')
+            return 1;
+        if(len_str_param == 3 and len(str_param[2].replace(' ','')) != 0):
+            print("string error: "+ line+"  line: " + str(ind_line))
+            print('after string may stay only comment')
+            return 1;
+        
         line = line.split(' ');
+        if(len_str_param == 3): line += ['"' + str_param[1] + '"']
         cmd = []
         #pass empty str and make upper that need make upper:
         for x in line:
@@ -61,6 +75,7 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
         line = asm_file.readline();
         ind_line+=1;
 
+    pcode_file.write(bytearray(  cmd_handler['HLT']([]).v_bytes ))#ADD HLT IN END
     pcode_file.close()
     asm_file.close()
     return 0;

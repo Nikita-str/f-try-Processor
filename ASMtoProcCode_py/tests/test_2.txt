@@ -1,0 +1,22 @@
+mov al  4
+mov cx  2011
+mul cx  al
+
+SUB ecx 13
+DIV ecx 2
+
+OUT "(4 * 2011 - 13)/2 = "
+OUT ECX
+OUT "\n"
+
+IN ebx
+
+MOV eax ecx;save in eax (4 * 2011 - 13)/2
+ADD ecx ebx
+
+OUT ebx
+OUT " + "
+OUT eax
+OUT " = "
+OUT ecx
+OUT "\n"
