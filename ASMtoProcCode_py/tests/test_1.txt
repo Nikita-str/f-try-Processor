@@ -1,0 +1,8 @@
+MOV RAX   0
+ADD RAX   5
+MOV RCX   7
+ADD RAX RCX
+
+OUT "0+5+7="
+OUT RAX
+OUT "\n"
