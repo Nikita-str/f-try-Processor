@@ -14,7 +14,8 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
     try:
         pcode_file = open(path_to, "wb");
     except:
-        print("path to pcode file is bad  -______-");
+        print("path to pcode file is bad  -______-")
+        print("[mentioned in path folders must exist]");
         return 1;
     
     reg_init()
@@ -29,12 +30,13 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
             line = asm_file.readline();
             ind_line+=1;
             continue;
-        line = line.upper()
+        #line = line.upper()
         line = line.split(' ');
         cmd = []
-        #pass empty str:
+        #pass empty str and make upper that need make upper:
         for x in line:
             if(len(x) == 0): continue;
+            if(x[0] != '"'): x = x.upper()
             cmd += [x]
 
         cmd_name = cmd[0]

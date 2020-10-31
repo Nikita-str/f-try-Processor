@@ -321,7 +321,7 @@ def OUT_cmd(ops, cmd = ""):
     if(is_reg_1[0] == fGP_REG): 
         return ret_cmd(True, [opcodes["OUT_FR"], is_reg_1[1]]);
 
-    c_str = ops[0]
+    c_str = ops[0].replace('\\n','\n')
     len_str = len(c_str)
     if(c_str[0] == '"' and c_str[len_str - 1] == '"'):
         c_str = c_str[1:(len_str - 1)]
