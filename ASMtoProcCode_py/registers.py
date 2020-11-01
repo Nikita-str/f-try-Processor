@@ -16,6 +16,13 @@ def reg_init():
         regs_index['E'+c+'X'] = ind + 3;
         regs_index['R'+c+'X'] = ind + 4;
         ind += 4;
+    for i in range(0,16):
+        c = str(i)
+        regs_index['R'+c+'B'] = ind + 1;
+        regs_index['R'+c+'W'] = ind + 2;
+        regs_index['R'+c+'D'] = ind + 3;
+        regs_index['R'+c] = ind + 4;
+        ind += 4;        
 
 
     global fregs_idex;
@@ -23,4 +30,8 @@ def reg_init():
     ind = 0;
     for c in char_gen_reg:
         fregs_index['F'+c+'X'] = ind + 1;
+        ind+=1;
+    for i in range(0,16):
+        c = str(i)
+        fregs_index['FR'+c] = ind + 1;
         ind+=1;
