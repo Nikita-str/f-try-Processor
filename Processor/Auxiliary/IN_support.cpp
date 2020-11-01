@@ -8,6 +8,9 @@ int IN_read_double(double *value)
     if (std::cin >> x) {
         *value = x;
         return IN_sup_NO_ERROR;
+    } else {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     return IN_sup_ERROR;
 }
@@ -20,6 +23,9 @@ int IN_read_int64(int64_t *value)
     if (std::cin >> x) {
         *value = x;
         return IN_sup_NO_ERROR;
+    } else {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     return IN_sup_ERROR;
 }

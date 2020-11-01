@@ -1,4 +1,6 @@
 #pragma once
+#ifndef PROCESSOR_OPCODES
+#define PROCESSOR_OPCODES
 #include <stdint.h>
 
 enum {PROC_MAX_CMD_LEN = 1};
@@ -83,6 +85,8 @@ enum OpCode_1_byte
     OUT_C_STRING,
     IN_REG, //64 bit
     IN_FREG,
+
+    HLT,
 };
 
 
@@ -126,13 +130,13 @@ enum REG_BYTES
     REG_8B = 0x4, 
 };
 
-const uint64_t REG_1B_MASK = 0xFF;
-const uint64_t REG_2B_MASK = 0xFFFF;
-const uint64_t REG_4B_MASK = 0xFFFFFFFF;
-const uint64_t REG_8B_MASK = 0xFFFFFFFFFFFFFFFF;
-const uint64_t REG_B_MASKS[4] = {0xFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF};
-const uint64_t REG_B_INV_MASKS[4] = {0xFFFFFFFFFFFFFF00, 0xFFFFFFFFFFFF0000, 0xFFFFFFFF00000000, 0x0};
-const uint64_t REG_LAST_BIT_MASKS[4] = {0x80, 0x8000, 0x80000000, 0x8000000000000000};
+static const uint64_t REG_1B_MASK = 0xFF;
+static const uint64_t REG_2B_MASK = 0xFFFF;
+static const uint64_t REG_4B_MASK = 0xFFFFFFFF;
+static const uint64_t REG_8B_MASK = 0xFFFFFFFFFFFFFFFF;
+static const uint64_t REG_B_MASKS[4] = {0xFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF};
+static const uint64_t REG_B_INV_MASKS[4] = {0xFFFFFFFFFFFFFF00, 0xFFFFFFFFFFFF0000, 0xFFFFFFFF00000000, 0x0};
+static const uint64_t REG_LAST_BIT_MASKS[4] = {0x80, 0x8000, 0x80000000, 0x8000000000000000};
 
 enum TYPE_OF_REG
 {
@@ -163,3 +167,4 @@ enum JUMP_IFS
     JIF_MAX_VALID = 7,
 
 };
+#endif

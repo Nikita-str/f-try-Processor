@@ -19,7 +19,7 @@ struct __proc_reg
 /// <summary>return ptr on register</summary>
 /// <param name="type_of_reg">TYPE_OF_REG</param>
 struct __proc_reg
-    processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Registers regs)
+processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
 {
     enum {REG_OK = 0 };
     enum {REG_ERROR = 1 };
@@ -31,7 +31,7 @@ struct __proc_reg
         if (!bytes) bytes = REG_8B;
         switch (reg_byte) {
             //c(r) mean case(reg distinctive char), for example, r = A => AL, AX, EAX, RAX 
-            #define c(r) case r##L: case r##X: case E##r##X: case R##r##X: return (x) { &(regs.R##r##X), &(regs.FLAGS), bytes, REG_OK };
+            #define c(r) case r##L: case r##X: case E##r##X: case R##r##X: return (x) { &(proc->reg.R##r##X), &(proc->reg.FLAGS), bytes, REG_OK };
             c(A);
             c(B);
             c(C);
@@ -43,7 +43,7 @@ struct __proc_reg
     {
         enum REG_BYTES bytes = REG_8B;
         switch (reg_byte) {
-            #define c(reg_dist_char) case reg_dist_char: return (x) { &(regs.##reg_dist_char), &(regs.FLAGS), bytes, REG_OK };
+            #define c(reg_dist_char) case reg_dist_char: return (x) { &(proc->reg.##reg_dist_char), &(proc->reg.FLAGS), bytes, REG_OK };
             c(FAX);
             c(FBX);
             c(FCX);
