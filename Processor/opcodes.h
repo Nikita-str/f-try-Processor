@@ -111,6 +111,33 @@ enum REG
     DX,
     EDX,
     RDX,
+
+    #define x(n) \
+    R##n##B,     \
+    R##n##W,     \
+    R##n##D,     \
+    R##n        
+
+    x(0),
+    x(1),
+    x(2),
+    x(3),
+    x(4),
+    x(5),
+    x(6),
+    x(7),
+    x(8),
+    x(9),
+    x(10),
+    x(11),
+    x(12),
+    x(13),
+    x(14),
+    x(15),
+
+    #undef x
+
+    HEH_JUST_END_REG_NOT_USE_IT_VALUE_PLEASE,
 };
 
 enum FREG
@@ -128,6 +155,28 @@ enum REG_BYTES
     REG_2B = 0x2, 
     REG_4B = 0x3, 
     REG_8B = 0x4, 
+
+    #define x(n) FR##n
+
+    x(0),
+    x(1),
+    x(2),
+    x(3),
+    x(4),
+    x(5),
+    x(6),
+    x(7),
+    x(8),
+    x(9),
+    x(10),
+    x(11),
+    x(12),
+    x(13),
+    x(14),
+    x(15),
+
+    #undef x
+
 };
 
 static const uint64_t REG_1B_MASK = 0xFF;

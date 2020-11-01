@@ -54,6 +54,36 @@ typedef struct Registers
         int64_t RDX;
     };
 
+    // +++++++       REG Rn RnD ... RnB
+    #define x(n)           \
+    union                  \
+    {                      \
+        int8_t R##n##B;    \
+        int16_t R##n##W;    \
+        int32_t R##n##D;    \
+        int64_t R##n;       \
+    }
+
+    x(0);
+    x(1);
+    x(2);
+    x(3);
+    x(4);
+    x(5);
+    x(6);
+    x(7);
+    x(8);
+    x(9);
+    x(10);
+    x(11);
+    x(12);
+    x(13);
+    x(14);
+    x(15);
+
+    #undef x
+    // -----       REG RnN
+
     //F mean with float point(double)
 
     double FAX;
@@ -61,7 +91,28 @@ typedef struct Registers
     double FCX;
     double FDX;
 
-    
+    // +++++       REG FRn    
+    #define x(n) double FR##n
+
+    x(0);
+    x(1);
+    x(2);
+    x(3);
+    x(4);
+    x(5);
+    x(6);
+    x(7);
+    x(8);
+    x(9);
+    x(10);
+    x(11);
+    x(12);
+    x(13);
+    x(14);
+    x(15);
+
+    #undef x
+    // -----       REG FRn    
 
     uint64_t FLAGS;
 

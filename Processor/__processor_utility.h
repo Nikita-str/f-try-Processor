@@ -37,6 +37,24 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
             c(C);
             c(D);
             #undef c
+            #define c(n) case R##n##B: case R##n##W: case R##n##D: case R##n: return (x) { &(proc->reg.R##n), &(proc->reg.FLAGS), bytes, REG_OK };
+            c(0);
+            c(1);
+            c(2);
+            c(3);
+            c(4);
+            c(5);
+            c(6);
+            c(7);
+            c(8);
+            c(9);
+            c(10);
+            c(11);
+            c(12);
+            c(13);
+            c(14);
+            c(15);
+            #undef c
         }
     }
     case fGP:
@@ -48,6 +66,24 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
             c(FBX);
             c(FCX);
             c(FDX);
+            #undef c
+            #define c(n) case FR##n: return (x) { &(proc->reg.FR##n), &(proc->reg.FLAGS), bytes, REG_OK };
+            c(0);
+            c(1);
+            c(2);
+            c(3);
+            c(4);
+            c(5);
+            c(6);
+            c(7);
+            c(8);
+            c(9);
+            c(10);
+            c(11);
+            c(12);
+            c(13);
+            c(14);
+            c(15);
             #undef c
         }
     }
