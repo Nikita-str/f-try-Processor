@@ -1,0 +1,42 @@
+MOV R0B 0
+MOV R1W 1
+MOV R2D 2
+MOV R3 3
+MOV R4 4
+MOV R7 7
+MOV R8 8
+MOV R12 12
+MOV R15 15
+
+ADD R15 R0B
+ADD R15 R1W
+ADD R15 R2D
+ADD R15 R3
+ADD R15 R4
+ADD R15 R7
+ADD R15 R8
+ADD R15 R12
+SUB R15 10
+
+OUT "we have R0 - R15 regs and now we check it...\n"
+OUT "if all good then next true: 42 == "
+OUT R15
+OUT "\n"
+
+
+MOV FR0 0
+MOV FR1 1.5
+MOV FR2 2.5
+MOV FR7 7.5
+MOV FR15 15.5
+ADD FR15 FR0
+ADD FR15 FR1
+ADD FR15 FR2
+ADD FR15 FR7
+
+ADD FR15 FR15
+
+OUT "we have FR0 - FR15 regs and now we check it...\n"
+OUT "if all good then next true: 54.0 == "
+OUT FR15
+OUT "\n"
