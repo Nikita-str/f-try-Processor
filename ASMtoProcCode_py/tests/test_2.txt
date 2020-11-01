@@ -9,10 +9,11 @@ OUT "(4 * 2011 - 13)/2 = "
 OUT ECX
 OUT "\n"
 
+OUT "please write number: "
 IN ebx
 
 MOV eax ecx;save in eax (4 * 2011 - 13)/2
-ADD ecx ebx
+ADD ecx ebx // by the way we can do comment like '//'  
 
 OUT ebx
 OUT " + "

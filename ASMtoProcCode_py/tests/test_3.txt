@@ -1,0 +1,18 @@
+mov FAX  4.11
+mov FBX  4.21
+mul FAX  FBX
+
+add FAX  3
+mov RAX  FAX;double -> int
+
+;just check bug when ';' first char
+
+OUT "write double number: "
+IN FCX
+OUT "(int)(4.11 * 4.21 + 3) - "
+OUT Fcx
+MOV FAX  RAX; int -> double
+SUB fax  Fcx
+OUT " = "
+OUT FaX
+OUT "\n" 

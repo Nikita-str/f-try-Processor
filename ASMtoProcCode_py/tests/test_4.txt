@@ -1,0 +1,23 @@
+PUSH 4
+PUSH 12
+PUSH 1
+ADD 
+ADD
+POP EAX
+
+PUSH 4.05
+PUSH 12.05
+PUSH 1.05
+ADD_F 
+ADD_F
+POP FAX
+
+OUT "(CHECK PUSH POP (int4)) : 4 + 12 + 1 = "
+OUT EAX
+OUT "\n"
+
+OUT "(CHECK PUSH POP (double)) : 4.05 + 12.05 + 1.05 = "
+OUT FAX
+OUT "\n"
+
+HLT
