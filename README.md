@@ -49,18 +49,18 @@ MOV FREG1 FREG2 : FREG1 = FREG2
 MOV REG FREG : REG = (int)FREG  
 MOV FREG REG : FREG = REG  
 
--JUMP:реализован в процессоре, не реализован в {asm->pcode}  
+- JUMP:реализован в процессоре, не реализован в {asm->pcode}  
 
--INC REG : REG = REG + 1
--DEC REG : REG = REG - 1
+- INC REG : REG = REG + 1
+- DEC REG : REG = REG - 1
 
--OUT:  
+- OUT:  
 OUT REG : output value of REG  
 OUT FREG : output value of FREG  
 OUT STR : output STR
 
--IN:
+- IN:
 IN REG : waiting for input value(VAL) for REG  
 IN FREG : waiting for input value(FVAL) for FREG  
 
--HLT : stop execution  
+- HLT : stop execution  
