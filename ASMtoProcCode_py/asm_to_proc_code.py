@@ -5,6 +5,52 @@ from  cmd_parse import get_cmd_prefix;
 
 import sys
 
+def del_comment(line):
+    r = line.strip()
+    r = r.split(';')[0]
+    r = r.split('//')[0]
+    return r;
+
+def create_header(name_parse_info):#TODO:we need to create header for .#pcode# executable file.
+    #first 4byte is - version(for test -5 it is 0(i.e. there is no one section))
+    pass
+    return
+
+def name_parse_phase(asm_file):
+    name_parse_info = {'with_section' : False, 'version' : 0}
+    
+    line = asm_file.readline();
+    ind_line = 1;
+    
+    def pre_continue(): line = asm_file.readline(); ind_line+=1;
+    
+    while line:
+        line = del_comment(line)
+        if(len(line) == 0): pre_continue(); continue;
+        is_section = (line[0] == '=');
+        if(not name_phase_info['with_section']):
+            if(not is_section):break;#in file first is not section! => version is 0; without section; without names; break;
+            name_phase_info['with_section'] = True;
+            name_phase_info['version'] = 1;
+
+            name_phase_info['sections'] = [];
+
+            name_phase_info['loc_names'] = [];
+            name_phase_info['glob_names'] = [];
+
+            name_phase_info['loc_funcs'] = [];
+            name_phase_info['glob_funcs'] = [];
+
+            name_phase_info['labels'] = [];
+            
+        if(is_section):
+            
+                
+        pre_continue()
+
+    asm_file.seek(0)#go to start of file
+    return name_parse_info
+
 def ASM_to_PCode(path_from, path_to = "p.#code#"):
     try:
         asm_file = open(path_from, "r");
@@ -24,9 +70,7 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
     line = asm_file.readline();
     ind_line = 1;
     while line:
-        line = line.strip()
-        line = line.split(';')[0]
-        line = line.split('//')[0]
+        line = del_comment(line)
         if(len(line) == 0):
             line = asm_file.readline();
             ind_line+=1;
@@ -55,6 +99,10 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
 
         cmd_name = cmd[0]
         operands = cmd[1:]
+        
+        for i in range(0,len(operands)-1):#delete ',' after operands except last
+            if(operands[i][len(operands[i])-1]==','):operands[i]=operands[i][0:len(operands[i])-1]
+            
         func = cmd_handler.get(cmd_name)
         if(not func):
             cmd_prefix = get_cmd_prefix(cmd_name)
