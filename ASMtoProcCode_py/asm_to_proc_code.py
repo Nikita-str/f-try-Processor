@@ -10,6 +10,7 @@ from class__asm_name import asm_name
 
 import sys
 
+# + + + CONSTS + + + ###################
 LINE_TYPE__CODE_OR_VAR = -3;
 LINE_TYPE__ERROR = -2;
 LINE_TYPE__END = -1;
@@ -22,13 +23,15 @@ LINE_TYPE__VAR = 4;
 VAR__ONE = -1#one may be only local var
 VAR__LOC = 0
 VAR__GLOB = 1
+# - - - CONSTS - - - ###################
 
 
 # + + + GLOBAL VAR + + + ##################################################################
 parse_info = {#'with_section' : False,
               'version' : 0,
               'sections':[], 'loc_names':[], 'glob_names':[],
-              'labels':[], 'loc_funcs':[], 'glob_funcs':[]}
+              'labels':[], 'loc_funcs':[], 'glob_funcs':[],
+              'entry_point':None}
 
 expected_names = [] # if name was used before definition: then  expected_names+=[name]
 
@@ -37,6 +40,13 @@ ind_line = 0;
 asm_file = None;
 pcode_file = None;
 # - - - GLOBAL VAR - - - ##################################################################
+
+# order of []_parse function in this file:
+#    1: section_parse
+#    2: var_parse
+#    3: code_parse
+#    4: func_parse
+#    5: label_parse
 
 def del_comment(line):
     r = line.strip()
@@ -53,6 +63,7 @@ def create_header(name_parse_info):#TODO:we need to create header for .#pcode# e
 def valid_name(name):
     global regs_index;
     reg_init();
+    if(len(name) == 0):return(False, 'empty name is unallowable')
     if(name.upper() in regs_index):return (False, 'that name used for register')
     if('0'<=name[0] and name[0]<='9'):return (False, "name can't start from number")
     for c in name:
@@ -61,6 +72,7 @@ def valid_name(name):
     return (True, '')
 
 def check_name(name):#kind of OK but TODO:CHECK later
+    global parse_info
     anames = parse_info['loc_names']+ parse_info['glob_names'];
     anames += parse_info['loc_funcs'] + parse_info['glob_funcs']  + parse_info['labels']
     for aname in anames:
@@ -127,7 +139,7 @@ def section_parse(): #TODO:VRODE VSE OK
 #        VAR PARSE
 #
 def var_parse(var_section_type):
-    global asm_file, pcode_file, line, ind_line;
+    global parse_info, asm_file, pcode_file, line, ind_line;
 
     if(var_section_type == VAR__GLOB): name_type = 'glob_names'
     else: name_type = 'loc_names'
@@ -275,7 +287,7 @@ def var_parse(var_section_type):
             print('kawo? .-. something weird happen  (did not implement type'+var_type+')')
             return LINE_TYPE__ERROR
 
-        name_for_subst = asm_name(var_name, pcode_file.tell(), var_type, arr_len)#TODO:CHECK:file.tell()
+        name_for_subst = asm_name(var_name, pcode_file.tell(), NAME_TYPE__VAR, var_type, arr_len)#TODO:CHECK:file.tell()
         if(len(v_bytes)==0):# or name_for_subst==None):
             print('error (or maybe not ... im not sure actually,  heh)    line:'+str(ind_line))
             return LINE_TYPE__ERROR
@@ -352,7 +364,62 @@ def code_parse():
     return LINE_TYPE__END
 
 
+#######################################
+##
+#        FUNC PARSE
+#
+def func_parse():
+    global parse_info, line, ind_line
+    
+    line = del_comment(line)
+    if(len(line) < 1):print('[dev] error: call func_parse when it is not func -___-'); raise 1;
+    
+    first_char = line[0]
+    line = line[1:]
+    i2 = line.find(':') 
+    if(i2 == -1):print("error: after name of function must stay ':'"); return LINE_TYPE__ERROR;
+    if(len(line) != i2+1):print("error: after 'name_of _function:' may only stay comment or next line"); return LINE_TYPE__ERROR;
+    
+    
+    if(first_char == '!'):
+        func_type = 'glob_funcs'
+        if(line[0] == '+'):line = line[1:]; i2 -= 1;
+        if(line[0] == '-'):print("error: entry point(!) can be only global func(+) not local(-)"); return LINE_TYPE__ERROR;
+        if(parse_info['entry_point'] != None):
+            print('error: entry point is already exist '+parse_info['entry_point'])
+            return LINE_TYPE__ERROR;
+    elif(first_char == '+'):func_type = 'glob_funcs'
+    elif(first_char == '-'):func_type = 'loc_funcs'
+    else: print('error: weird error ... it must be func'); return LINE_TYPE__ERROR;
 
+    func_name = line[0:i2]
+    check = valid_name(func_name)
+    if(check[0] == False):
+        print('error: name is not valid   name: "'+func_name+'"   line:'+str(ind_line))
+        print(check[1])
+        return LINE_TYPE__ERROR     
+    if(check_name(func_name) != None):
+        print('error: name '+func_name+' already used   line:'+str(ind_line))
+        return LINE_TYPE__ERROR
+
+    name_for_subst = asm_name(func_name, pcode_file.tell(), name_type = NAME_TYPE__FUNC)#TODO:CHECK:file.tell()
+    name_substitute(name_for_subst)
+    parse_info[func_type] += [name_for_subst]
+    
+    pre_continue();
+    return LINE_TYPE__CODE
+
+
+#######################################
+##
+#        LABEL PARSE
+#
+
+
+##################################################
+####
+##               ASM TO PCODE
+#
 def ASM_to_PCode(path_from, path_to = "p.#code#"):
     global asm_file, pcode_file, line, ind_line
     try:
@@ -375,7 +442,6 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
     line_type = section_parse();
     if(line_type == LINE_TYPE__END): add_hlt(pcode_file)#EMPTY FILE == HLT
     while(line_type != LINE_TYPE__END):#TODO
-        print('TODO:DEL: HERE 2 WHILE: '+str(line_type)+'  '+str(ind_line)+'   '+str(line))
         if(type(line_type) != int and len(line_type) == 2 and line_type[0] == LINE_TYPE__VAR):
             line_type = var_parse(line_type[1])
         elif(line_type == LINE_TYPE__CODE): line_type = code_parse();
@@ -384,6 +450,8 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
         elif(line_type == LINE_TYPE__SECTION): line_type = section_parse();
         elif(line_type == LINE_TYPE__ERROR): print('(line: '+str(ind_line)+')'); return 1;
         else: print('omg... there is not such type of line:  (line: '+str(ind_line)+')'); return 1;
+
+    #TODO:create header
         
     pcode_file.close()
     asm_file.close()

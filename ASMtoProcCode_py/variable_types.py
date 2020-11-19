@@ -31,3 +31,7 @@ def sizeof_variable_type(var_type):
     if(var_type == 'DOUB'):return 8
     #MAYBE:ADD ARRAY ... OR NO(не очень то уж и орно на самом деле)
     return None
+
+NAME_TYPE__VAR  = 1
+NAME_TYPE__FUNC = 2
+NAME_TYPE__LABEL = 3
