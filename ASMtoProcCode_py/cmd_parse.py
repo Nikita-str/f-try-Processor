@@ -2,6 +2,8 @@ from opcodes import *;
 from registers import *;
 from values import *;
 
+from is_ptr import is_cptr, is_ncptr;
+
 class ret_cmd:
     def __init__(self, valid, v_bytes, why_invalid = ""):
         self.valid = valid;
@@ -276,6 +278,49 @@ def HLT_cmd(ops, cmd = ""):
     if(len(ops) > 0): return TOO_MANY_PARAMS
     return ret_cmd(True, [opcodes["HLT"]])
 
+def PASS_cmd(ops, cmd = ""):
+    if(cmd != ""): return ERR_CMD
+    if(len(ops) > 0): return TOO_MANY_PARAMS
+    return ret_cmd(True, [opcodes["PASS"]])
+
+
+def CMP_cmd(ops, cmd = ""):
+    if(cmd != ""): return ERR_CMD
+    op_len = len(ops)
+    if(op_len > 2): return TOO_MANY_PARAMS
+    if(op_len < 2): return TOO_FEW_PARAMS
+    
+    is_reg_1 = is_reg(ops[0])
+    if(is_reg_1[0] == NOT_REG): return ERR_OP_1   
+
+    is_reg_2 = is_reg(ops[1])
+    if(is_reg_2[0]):
+        if(is_reg_1[0] != is_reg_2[0]): return ERR_REG_COMP
+        if(is_reg_1[0] == iGP_REG):
+            return ret_cmd(True, [opcodes["CMP_REG_REG"], is_reg_1[1], is_reg_2[1]])
+        if(is_reg_1[0] == fGP_REG):
+            return ret_cmd(True, [opcodes["CMP_FREG_FREG"], is_reg_1[1], is_reg_2[1]])
+
+    if(is_reg_1[0] == iGP_REG):
+        is_num_2 = is_num(ops[1])
+        if(not is_num_2[0]): return ERR_OP_2
+        value = is_num_2[1]
+        reg_bytes = is_reg_1[2]
+        if(check_value(value, reg_bytes)): return TOO_BIG_OP_2_NUM
+        v_bytes = [opcodes["CMP_REG_VAL"], is_reg_1[1]]
+        value_to_byte(v_bytes, value, reg_bytes)
+        return ret_cmd(True, v_bytes)
+    if(is_reg_1[0] == fGP_REG):
+        is_fnum_2 = is_fnum(ops[1])
+        if(not is_fnum_2[0]): return ERR_OP_2
+        value = is_fnum_2[1]
+        v_bytes = [opcodes["CMP_FREG_VAL"], is_reg_1[1]]
+        f_value_to_byte(v_bytes, value)
+        return ret_cmd(True, v_bytes)
+        
+    return ERR_OP_2
+    
+    
 cmd_handler = {
     'PUSH' : PUSH_cmd,
     'POP' : POP_cmd,
@@ -296,6 +341,10 @@ cmd_handler = {
     'IN'  : IN_cmd,
 
     'HLT' : HLT_cmd,
+
+    'CMP' : CMP_cmd,
+    
+    'PASS' : PASS_cmd,
     }
 
 
@@ -310,6 +359,7 @@ def get_cmd_prefix(cmd_name):
     #NOW CANNOT = NC
     #4:
     if(cmd_name[0:4] == 'PUSH'): return [True, 'PUSH', cmd_name]
+    if(cmd_name[0:4] == 'PASS'): return [True, 'PASS', cmd_name] #NC
     #3:
     if(cmd_name[0:3] == 'POP'): return [True, 'POP', cmd_name]
 
@@ -328,6 +378,8 @@ def get_cmd_prefix(cmd_name):
     if(cmd_name[0:3] == 'INC'): return [True, 'INC', cmd_name] #NC
 
     if(cmd_name[0:3] == 'HLT'): return [True, 'HLT', cmd_name] #NC
+    
+    if(cmd_name[0:3] == 'CMP'): return [True, 'CMP', cmd_name] #NC
     #2:
     if(cmd_name[0:2] == 'IN'): return [True, 'IN', cmd_name] #NC
 

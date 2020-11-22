@@ -12,10 +12,19 @@ class asm_name:
         self.arr_len = arr_len 
 
         self.ptr_byte_form = value_to_byte([], self.position, PTR_BYTE)
-        
+ 
     def get_len(self):
         #if self.arr_len == None => error(scalar type)
         return self.arr_len
 
     def get_sz(self):
         return sizeof_variable_type(self.var_type)
+
+    def get_value_ptr(self):
+        return self.position
+
+    def __str__(self):
+        #TODO:change in way that allow create header by just file.write(str(asm_name))
+        return self.name
+    
+    def __repr__(self):return self.name

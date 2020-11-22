@@ -10,7 +10,7 @@ def is_num(s):
     neg = False
     if(s[0] == '-'):
         neg = True
-        s = s[1:]
+        s = s[1:].lstrip()
     if(s[0:2]== '0x' or s[0:2]== '0X'):
         _hex = True
         s = s[2:]
@@ -32,7 +32,7 @@ def is_num(s):
     if(not last_num): return [False]
     if(neg): return [True, -value]
     return [True, value]
-MAX_VALUE = {
+MAX_VALUE = { #first F --> 7 ?
     1 : 0xFF,
     2 : 0xFFFF,
     4 : 0xFFFF_FFFF,
@@ -69,9 +69,26 @@ def check_value(value, n_byte):
     global ADD_NEG_VALUE, MAX_VALUE   
     return (value < 0 and value + ADD_NEG_VALUE[n_byte] < 0) or (value > MAX_VALUE[n_byte]);  
 
+def is_valid_value(value, n_byte): return not check_value(value, n_byte)
+
+#for mul subable = False, for add/sub: True
+#for mul zero_byte_value = 1; for add/sub = 0;
+def need_bytes_for_ptr_value(ptr_value, zero_byte_value, subable = False):
+    if(ptr_value == zero_byte_value): return 0
+    need_bytes = 0
+    if(subable and ptr_value < 0): ptr_value = -ptr_value;
+    while ptr_value != 0:
+        ptr_value = ptr_value // BYTE;
+        need_bytes += 1
+    if(need_bytes == 0): need_bytes = 1;
+    return need_bytes
+    
+
 NOT_REG = 0
+NOT_PTR_REG = 0
 iGP_REG = 1
 fGP_REG = 2
+IS_PTR_REG = 3
 def is_reg(s):
     reg_init();
     reg = regs_index.get(s)
@@ -83,3 +100,23 @@ def is_reg(s):
     freg = fregs_index.get(s)
     if(freg): return [fGP_REG, freg, 8, s == 'FAX']
     return [NOT_REG];
+
+def is_ptr_reg(s):
+    temp = is_reg(s)
+    if(len(z) == 1):return [NOT_PTR_REG];
+    if(temp[0] != iGP_REG or temp[2] != PTR_BYTE):return [NOT_PTR_REG]
+    return [IS_PTR_REG, temp[1]]
+
+
+def valid_name(name):
+    global regs_index;
+    reg_init();
+    if(len(name) == 0):return(False, 'empty name is unallowable')
+    if(name.upper() in regs_index):return (False, 'that name used for register')
+    if('0'<=name[0] and name[0]<='9'):return (False, "name can't start from number")
+    for c in name:
+        if(('a'<=c and c<='z') or (c=='_') or ('0'<=c and c<='9')): continue
+        return (False, "in name may be only chars from [a..z | 0..9 | _]  error char: '"+c+"'")
+    return (True, '')
+
+     

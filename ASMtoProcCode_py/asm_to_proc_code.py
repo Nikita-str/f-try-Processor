@@ -8,6 +8,8 @@ from variable_types import *;
 
 from class__asm_name import asm_name
 
+from global_variable import *;
+
 import sys
 
 # + + + CONSTS + + + ###################
@@ -24,22 +26,6 @@ VAR__ONE = -1#one may be only local var
 VAR__LOC = 0
 VAR__GLOB = 1
 # - - - CONSTS - - - ###################
-
-
-# + + + GLOBAL VAR + + + ##################################################################
-parse_info = {#'with_section' : False,
-              'version' : 0,
-              'sections':[], 'loc_names':[], 'glob_names':[],
-              'labels':[], 'loc_funcs':[], 'glob_funcs':[],
-              'entry_point':None}
-
-expected_names = [] # if name was used before definition: then  expected_names+=[name]
-
-line = None;
-ind_line = 0;
-asm_file = None;
-pcode_file = None;
-# - - - GLOBAL VAR - - - ##################################################################
 
 # order of []_parse function in this file:
 #    1: section_parse
@@ -60,21 +46,12 @@ def create_header(name_parse_info):#TODO:we need to create header for .#pcode# e
     pass
     return
 
-def valid_name(name):
-    global regs_index;
-    reg_init();
-    if(len(name) == 0):return(False, 'empty name is unallowable')
-    if(name.upper() in regs_index):return (False, 'that name used for register')
-    if('0'<=name[0] and name[0]<='9'):return (False, "name can't start from number")
-    for c in name:
-        if(('a'<=c and c<='z') or (c=='_') or ('0'<=c and c<='9')): continue
-        return (False, "in name may be only chars from [a..z | 0..9 | _]  error char: '"+c+"'")
-    return (True, '')
-
-def check_name(name):#kind of OK but TODO:CHECK later
+def check_name(name, with_names = True, with_funcs = True, with_labels = True):#kind of OK but TODO:CHECK later
     global parse_info
-    anames = parse_info['loc_names']+ parse_info['glob_names'];
-    anames += parse_info['loc_funcs'] + parse_info['glob_funcs']  + parse_info['labels']
+    anames = []
+    if(with_names) : anames += parse_info['loc_names'] + parse_info['glob_names'];
+    if(with_funcs) : anames += parse_info['loc_funcs'] + parse_info['glob_funcs'];
+    if(with_labels): anames += parse_info['labels']
     for aname in anames:
         if(aname.name == name):return aname
     return None
@@ -402,6 +379,8 @@ def func_parse():
         print('error: name '+func_name+' already used   line:'+str(ind_line))
         return LINE_TYPE__ERROR
 
+    if(first_char == '!'):parse_info['entry_point'] = func_name;
+
     name_for_subst = asm_name(func_name, pcode_file.tell(), name_type = NAME_TYPE__FUNC)#TODO:CHECK:file.tell()
     name_substitute(name_for_subst)
     parse_info[func_type] += [name_for_subst]
@@ -414,7 +393,37 @@ def func_parse():
 ##
 #        LABEL PARSE
 #
+def label_parse():
+    global parse_info, line, ind_line
+    
+    line = del_comment(line)
+    if(len(line) < 1):print('[dev] error: call label_parse when it is empty line -___-'); raise 1;
+    
+    first_char = line[0]
+    line = line[1:]
+    i2 = line.find(':') 
+    if(i2 == -1):print("error: after name of label must stay ':'"); return LINE_TYPE__ERROR;
+    if(len(line) != i2+1):print("error: after 'name_of _label:' may only stay comment or next line"); return LINE_TYPE__ERROR;
+    
+    if(first_char != '.'):print("weird error: there must be '.'"); return LINE_TYPE__ERROR;
+    
+    label_name = line[0:i2]
+    
+    check = valid_name(label_name)
+    if(check[0] == False):
+        print('error: name is not valid   name: "'+label_name+'"   line:'+str(ind_line))
+        print(check[1])
+        return LINE_TYPE__ERROR     
+    if(check_name(label_name) != None):
+        print('error: name '+label_name+' already used   line:'+str(ind_line))
+        return LINE_TYPE__ERROR
 
+    name_for_subst = asm_name(label_name, pcode_file.tell(), name_type = NAME_TYPE__LABEL)#TODO:CHECK:file.tell()
+    name_substitute(name_for_subst)
+    parse_info['labels'] += [name_for_subst]
+    
+    pre_continue();
+    return LINE_TYPE__CODE
 
 ##################################################
 ####
@@ -463,6 +472,7 @@ if(len_arg == 1): ret_val = ASM_to_PCode('')
 if(len_arg == 2): ret_val = ASM_to_PCode(sys.argv[1])
 if(len_arg > 2): ret_val = ASM_to_PCode(sys.argv[1], sys.argv[2])
 if(ret_val != 0):
+    print(parse_info)#TODO:DEL
     print('some error occurred during assembling to pcode')
 else:
     print('\nassembling DONE')
