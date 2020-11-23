@@ -1,0 +1,3 @@
+=vars:
+kokos INT not_int; error: 'not_int' is not a int
+

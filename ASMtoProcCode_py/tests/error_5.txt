@@ -1,0 +1,5 @@
+.there_must_be_error: ;after label cant went section
+=vars:
+a INT 1;
+b INT 2;
+

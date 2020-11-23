@@ -1,0 +1,60 @@
+
+
+;ok parser
+//-______-
+
+=-vars:
+hi    CSTR   "... ~baka!!\n"
+x     INT4   125 
+arr   IARR4  10, 25, 27, 35, -2,  5,  0
+            ;-2,  5,  0 ;TODO:ADD:SOME LINE VAR-ARRAY DEFINE 
+d_arr DARR   2.5, 120.1201
+d     DO_UB  12.5 
+ans   CSTR   "? if all ok, then:   485.1201 = "
+next_line CSTR "\n"
+
+=code:
+
+!+_:;_-name
+.label_for_just_check:
+MOV eax  [x]
+=var: x_mul INT4 2
+MUL eax  [x_mul]
+JUMP .future
+.future:
+MOV EBX [arr]
+MOV EDX arr
+.wh:
+DEC EDX
+ADD EBX   [arr]
+CMP EDX 0
+JNZ .wh
+;now EBX = sum(arr)
+
+MOV FAX  0
+MOV ECX d_arr; ecx = ptr.   hmm... maybe regs for ptr?
+MOV EDX 0
+.wh0:
+ADD FAX [CAX]
+ADD ECX SZ(d_arr); SZ(double) = 8
+INC EDX
+CMP EDX, LEN(d_arr)
+JNE wh0   ; .wh0: . - not necessary
+
+MOV FBX, [d]
+
+JMP .no_baka_today
+OUT hi
+OUT hi
+.no_baka_today:
+MOV FCX  EAX
+ADD FBX FCX; fbx+=x*2
+MOV FCX EBX
+ADD FBX FCX; fbx+=sum(arr)
+ADD FBX FAX; fbx+=sum(d_arr)
+
+OUT ans
+OUT FBX 
+OUT next_line
+.heh_one_baka_today:
+OUT hi

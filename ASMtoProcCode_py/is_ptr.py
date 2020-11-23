@@ -1,7 +1,7 @@
-from values import *;
-from class__ptr_expression import cptr_expression, ncptr_expression;
+from values import is_num, is_ptr_reg, valid_name, PTR_BYTE, IS_PTR_REG, NOT_PTR_REG
+from class__ptr_expression import cptr_expression, ncptr_expression
 
-from global_variable import get_pcode_pos;
+from global_variable import get_pcode_pos, check_name
 
 #WARNING: IN is_cptr & is_ncptr A LOT OF COPY-PASTE  (it not hard to del, but then it bad to read...)
 #                                                    (or if it will be easy to read, it take a while; now i don't have time for this)
@@ -19,16 +19,21 @@ IS_PTR_RET__NOT_VALID_REG_PTR = 4
 IS_PTR_RET__TOO_BIG_VALUE = 5
 #IS_PTR_RET__TOO_MANY_REG =
 
+def is_str_ptr(operand):
+    op_len = len(operand)
+    if(operand[0] != '[' or operand[op_len-1] != ']'): return False
+    return True
+
 #now only ptr that have appearance like:  [const_1 * var + const_2] //var mean ptr on var
-def is_cptr(operand):
+def is_cptr(operand, not_write_previous_byte):
     op_len = len(operand)
     if(operand[0] != '[' or operand[op_len-1] != ']'): return (IS_PTR_RET__NOT_PTR, 'not ptr')
-    operand = operand[1:op_len-1];
-    op_len -= 2;
+    operand = operand[1:op_len-1]
+    op_len -= 2
 
-    add = 0;
-    mul = 1;
-    var = 0;
+    add = 0
+    mul = 1
+    var = 0
     
     if(operand.find('-') != -1):
         p = operand.find('-')
@@ -113,20 +118,20 @@ def is_cptr(operand):
         if (not temp[0]):return(IS_PTR_RET__INVALID_NAME, temp[1])
         temp = check_name(var)
         if(temp != None): var = temp.get_value_ptr()
-    cptr_expr = cptr_expression(get_pcode_pos(), mul, var, add)
+    cptr_expr = cptr_expression(get_pcode_pos() + not_write_previous_byte, mul, var, add)
     if(not cptr_expr.is_valid()): return (IS_PTR_RET__TOO_BIG_VALUE, 'value: '+str(cptr_expr.too_big_value)+' is very big for ptr')
     return [IS_PTR_RET__OK, cptr_expr]
 
 #now only ptr that have appearance like:  [var * reg + var] or [const_1 * reg + const_2]
-def is_ncptr(operand):
+def is_ncptr(operand, cmd_shift, operand_shift):
     op_len = len(operand)
     if(operand[0] != '[' or operand[op_len-1] != ']'): return (IS_PTR_RET__NOT_PTR, 'not reg-sensitive ptr')
-    operand = operand[1:op_len-1];
-    op_len -= 2;
+    operand = operand[1:op_len-1]
+    op_len -= 2
 
-    add = 0;
-    mul = 1;
-    reg = None;
+    add = 0
+    mul = 1
+    reg = None
 
     if(operand.find('-') != -1):
         p = operand.find('-')
@@ -203,8 +208,8 @@ def is_ncptr(operand):
             is_num_2 = is_num(term_2)
             if(not is_num_1[0] or not is_num_1[0]): return (IS_PTR_RET__NOT_PARSEABLE, 'now not can be parse  [not_const*name + reg]')
             else:
-                add = is_num_1[1]*is_num_2[1];
-                bool_done = True;
+                add = is_num_1[1]*is_num_2[1]
+                bool_done = True
         
         if(not bool_done):
             #term_2 == mul; term_3 == add;
@@ -226,6 +231,6 @@ def is_ncptr(operand):
         if (not temp[0]):return(IS_PTR_RET__INVALID_NAME, temp[1])
         temp = check_name(mul)
         if(temp != None): mul = temp.get_value_ptr()
-    ncptr_expr = ncptr_expression(get_pcode_pos(), mul, var, add)
+    ncptr_expr = ncptr_expression(get_pcode_pos() + cmd_shift, get_pcode_pos() + operand_shift, reg, mul, add)
     if(not ncptr_expr.is_valid()): return (IS_PTR_RET__TOO_BIG_VALUE, 'value: '+str(ncptr_expr.too_big_value)+' is very big for ptr')
     return [IS_PTR_RET__OK, ncptr_expr]

@@ -1,5 +1,5 @@
-from values import value_to_byte, PTR_BYTE;
-from variable_types import sizeof_variable_type, NAME_TYPE__VAR;
+from values import value_to_byte, PTR_BYTE
+from variable_types import sizeof_variable_type, NAME_TYPE__VAR
 
 class asm_name:
     def __init__(self, name, define_position, name_type, var_type = None, arr_len = None):
@@ -7,7 +7,7 @@ class asm_name:
         self.position = define_position
 
         self.name_type = name_type
-        if(name_type != NAME_TYPE__VAR):var_type = None; arr_len = None;
+        if(name_type != NAME_TYPE__VAR):var_type = None; arr_len = None
         self.var_type = var_type
         self.arr_len = arr_len 
 

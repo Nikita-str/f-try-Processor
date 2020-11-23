@@ -1,0 +1,2 @@
+=vars:
+eax INT 2; error: eax - is reg name.

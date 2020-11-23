@@ -1,0 +1,8 @@
+=vars:
+a INT 1;
+b INT 2;
+
+c INT 3;
+.label_in_vars_section: //label in vars section is not available 
+d INT 4;
+

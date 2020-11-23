@@ -1,0 +1,11 @@
+=vars:
+eax ERROR error; 3 error: eax - is reg name.   ERROR - no such type;  error - is not a valid value(hmm... or it is name?)
+
+=code:
+!+_:
+
+JMP .kokos ; error we are without kokos
+JMP kek; there the same error
+
+.press_f ;error ':'
+.F: ;error not valid name, name can contain only small eng letters and '_' and numbs(but not first)

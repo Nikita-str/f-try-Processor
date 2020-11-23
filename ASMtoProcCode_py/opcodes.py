@@ -1,6 +1,6 @@
-ONE_MORE_CMD_BYTE = 0x80;
+ONE_MORE_CMD_BYTE = 0x80
 
-OPCODE_PASS = 0x50;
+OPCODE_PASS = 0x50
 
 opcodes = { #not prefix of cmd, but distinct cmd
     #CBC = CAN BE CMD
@@ -95,12 +95,13 @@ opcodes = { #not prefix of cmd, but distinct cmd
 
 
     #JUMP:
+    #TODO:+NEW
     'JUMP_D'   : 0x38,
     'JUMP_A'   : 0x39, 
     'JUMP_IF_D': 0x3A,  
     'JUMP_IF_A': 0x3B,
-    'JUMP_ADDR_REG'    : 0x4C, #TODO:NEW
-    'JUMP_IF_ADDR_REG' : 0x4D, #TODO:NEW
+    'JUMP_ADDR_REG'    : 0x4C, 
+    'JUMP_IF_ADDR_REG' : 0x4D,
 
     #INC/DEC:
     'INC_R'    : 0x3C,
@@ -128,4 +129,15 @@ opcodes = { #not prefix of cmd, but distinct cmd
     #RET       = 0x4A,
 
     'PASS' : OPCODE_PASS, #TODO:+NEW
+    }
+
+jump_cmds = {
+    'JZ' : 1,  #JUMP IF ZERO
+    'JNZ' : 2, #JUMP IF NOT ZERO
+    'JOF' : 3, #JUMP IF OVERFLOW
+    'JAZ' : 4, #JUMP IF ABOVE ZERO
+    'JAZZ' : 4,
+    'JAEZ' : 5,#J IF ABOVE OR EQUAL ZERO
+    'JLZ' : 6, #J IF LESS ZERO
+    'JLEZ' : 7,#J IF LESS OR EQUAL ZERO
     }
