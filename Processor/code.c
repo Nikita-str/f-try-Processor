@@ -4,11 +4,21 @@
 
 #include "OS.h"
 
+#ifdef WIN32
+#include <conio.h>
+#endif
+
+
 void press_any_key()
 {
     printf("press any key(except for win/ctrl/power off/...) to end program\n");
-    int x = getchar();
-    if (x == '\n')x = getchar();
+    #ifdef WIN32
+    int x = _getch();
+    if (x == '\n')x = _getch();
+    #else
+    int x = getc(stdin);
+    if (x == '\n')x = getc(stdin);
+    #endif
 }
 
 int main(int argc, char *argv[])
