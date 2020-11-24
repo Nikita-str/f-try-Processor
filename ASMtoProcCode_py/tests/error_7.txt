@@ -1,0 +1,11 @@
+=vars:
+  x LIAR 1, 2, 3
+  y INT 5
+=code:
+!entry_point:
+  MOV eax [x + 1]
+  MOV ebx [y]
+  MOV ecx [z] ;error not such cmd
+  MOV edx [w]
+=var: w INT4 14
+.end:
