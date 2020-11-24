@@ -2,6 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef int32_t iproc_t;
 typedef int64_t i2proc_t;
@@ -125,7 +126,7 @@ typedef struct Memory
 {
     generic_stack(iproc_t) stack; // ?  
     generic_stack(double) stack_f; // ?  
-    uint8_t *memory; 
+    const uint8_t *memory; 
     //TODO: size of memory
     //TODO:
     //MAYBE:DO:MEMORY WITH FLAGS ? (EXECUTE / ...) 
@@ -154,6 +155,8 @@ typedef enum PROC_CMD_ERROR//TODO:MOVE:processor.h
     IN_ERROR = 0x7,
 
     CMD_EXIT = 0x8,
+
+    NO_REG_PTR = 0x9,
 }PROC_CMD_ERROR;
  
 /// <summary>continue execution from last command (for example when we have error in IN cmd)</summary>
@@ -167,3 +170,6 @@ extern void processor_free(Processor *proc, _Bool memory_free);
 
 extern void processor_output_error_code(PROC_CMD_ERROR error_code);
 
+extern void processor_mem_map(Processor *proc, proc_ptr_t start_position, uint8_t *mem_for_map, size_t map_bytes, _Bool set_next_cmd_on_mapped_mem);
+
+extern proc_ptr_t processor_set_next_cmd(Processor *proc, proc_ptr_t shift_from_mem_start);
