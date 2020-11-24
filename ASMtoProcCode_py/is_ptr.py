@@ -231,10 +231,9 @@ def is_ncptr(operand, cmd_shift, operand_shift):
             is_num_3 = is_num(term_3)
             if(is_num_2[0]): mul = is_num_2[1]
             else: mul = term_2
-            if(is_num_3[0]): mul = is_num_3[1]
-            else: mul = term_3
+            if(is_num_3[0]): add = is_num_3[1]
+            else: add = term_3
 
-    pass
     add_expect_add = False
     add_expect_mul = False
 
@@ -254,6 +253,7 @@ def is_ncptr(operand, cmd_shift, operand_shift):
         temp = check_name(mul)
         if(temp != None): mul = temp.get_value_by_typeof_act(typeof_act_mul)
         else: add_expect_mul = True
+
     ncptr_expr = ncptr_expression(get_pcode_pos() + cmd_shift, get_pcode_pos() + operand_shift, reg, mul, add)
     if(not ncptr_expr.is_valid()): return (IS_PTR_RET__TOO_BIG_VALUE, 'value: '+str(ncptr_expr.too_big_value)+' is very big for ptr')
 

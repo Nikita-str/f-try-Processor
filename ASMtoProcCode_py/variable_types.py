@@ -29,7 +29,7 @@ ALL_VALID_VAR_TYPE_NAMES = ALL_VAR_TYPES + \
 def sizeof_variable_type(var_type):
     if(len(var_type) == 4 and var_type[0:3] == 'INT'):return int(var_type[3:])
     if(var_type == 'DOUB'):return 8
-    if(len(var_type) == 5 and var_type[0:3] == 'IARR'):return int(var_type[4:])
+    if(len(var_type) == 5 and var_type[0:4] == 'IARR'):return int(var_type[4:])
     if(var_type == 'DARR'):return 8   
     #MAYBE:ADD ARRAY ... OR NO(не очень то уж и орно на самом деле)
     return None

@@ -323,35 +323,6 @@ def MOV_cmd(ops, cmd=""):
 
     if(is_reg_1[0] == iGP_REG):
         return num_help(ops[1], is_reg_1[2], [opcodes["MOV_RV"], is_reg_1[1]], [])
-        '''
-        return num_help(ops[1], is_reg_1[2], is_ptr_reg(ops[0])[0] != NOT_PTR_REG, [opcodes["MOV_RV"], is_reg_1[1]], [])
-
-        temp = valid_name(ops[1], False)
-        typeof_act = temp[0]
-        if typeof_act != TypeofNameAction.ERROR:
-            value = temp[1]
-            temp = check_name(value)
-            v_bytes = [opcodes["MOV_RV"], is_reg_1[1]]
-            if(temp != None): 
-                value = temp.get_value_by_typeof_act(typeof_act)
-                value_to_byte(v_bytes, value, is_reg_1[2])
-                return ret_cmd(True, v_bytes)
-            else: 
-                exp_name = expected_name(len(v_bytes), value, typeof_act)
-                if not exp_name.is_valid(): return ret_cmd(False, [0], 'such action with "'+value+'" is invalid')
-                add_expected_name(exp_name)
-                v_bytes += exp_name.to_bytes()
-                return ret_cmd(True, v_bytes)
-
-        is_num_2 = is_num(ops[1])
-        if(not is_num_2[0]): return ERR_OP_2
-        value = is_num_2[1]
-        reg_bytes = is_reg_1[2]
-        if(check_value(value, reg_bytes)): return TOO_BIG_OP_2_NUM
-        v_bytes = [opcodes["MOV_RV"], is_reg_1[1]]
-        value_to_byte(v_bytes, value, reg_bytes)
-        return ret_cmd(True, v_bytes)
-        '''
     if(is_reg_1[0] == fGP_REG):
         is_fnum_2 = is_fnum(ops[1])
         if(not is_fnum_2[0]): return ERR_OP_2
@@ -413,7 +384,7 @@ def JUMP_cmd(ops, cmd = ""):
 
         if aname:
             ptr = aname.get_value_by_typeof_act(typeof_act)
-            if local: value_to_byte(v_bytes, get_pcode_pos() - ptr, PTR_BYTE)
+            if local: value_to_byte(v_bytes, ptr - get_pcode_pos(), PTR_BYTE)
             else: value_to_byte(v_bytes, ptr, PTR_BYTE)
         else:
             typeof_name = TypeofName.not_var # i.e. jump on var is error
