@@ -1,24 +1,23 @@
-from opcodes import OPCODE_PASS
-from values import PTR_BYTE, is_valid_value, need_bytes_for_ptr_value, value_to_byte
-from global_variable import get_pcode_pos, set_pcode_pos, write_bytes_pcode
+#from opcodes import OPCODE_PASS
+#from values import PTR_BYTE, is_valid_value, need_bytes_for_ptr_value, value_to_byte
+#from global_variable import get_pcode_pos, set_pcode_pos, write_bytes_pcode
 
-class interface_ptr_expression:
-    __except = Exception('not realise')
-    def need_variable_define(self): raise interface_ptr_expression.__except
-    def get_need_variable_define(self): raise interface_ptr_expression.__except
+from values import is_valid_value, need_bytes_for_ptr_value
+from I_deferred_define import * 
+from class__expected_name import expected_name
 
 #cptr - const ptr
 #ncptr - not const ptr
 
 #used for: [a*x+b+....]
 #but now it can only be like : [const_1 * var + const_2]
-class cptr_expression(interface_ptr_expression):
+class cptr_expression(I_deferred_define):
     def __init__(self, position, mul = 1, variable = 0, add = 0):
         self.valid = True
-        if(not is_valid_value(mul, PTR_BYTE)):
+        if(type(mul) == int and not is_valid_value(mul, PTR_BYTE)):
             self.valid = False
             self.too_big_value = mul
-        elif(not is_valid_value(mul, PTR_BYTE)):
+        elif(type(add) == int and not is_valid_value(mul, PTR_BYTE)):
             self.valid = False
             self.too_big_value = add
         else:
@@ -43,16 +42,24 @@ class cptr_expression(interface_ptr_expression):
         if(self.value == None): return [self.variable]
         return []
 
-    def get_value(self): return self.value
+    def get_value(self): 
+        if(type(self.variable) == expected_name): return self.variable.value
+        return self.value
     def get_position(self): return self.position #only if we dont know value initial
 
 
     #return bool: can to substitute
-    def upd_value(self, value, variable = None, with_check_var = True):
-        #if(self.value != None):return False
+    def upd_value(self, value, variable, with_check_var = True):
         if(with_check_var and self.variable != variable):return False
         self.value = value
         return True
+
+    def upd_variable(self, a_name):
+        #if(type(self.variable) == expected_name):
+        #    if self.variable. != a_name.name: return False
+        #    self.value = a_name.get_value_by_typeof_act(self.variable.typeof_act)
+        #    return True
+        return self.upd_value(a_name.position, a_name.name)
 
     def value_substitute(self, set_pcode_file_back = False):
         if self.need_variable_define(): return False
@@ -70,7 +77,7 @@ class cptr_expression(interface_ptr_expression):
         if self.need_variable_define():
             ret += [OPCODE_PASS]*PTR_BYTE
         else:
-            value_to_byte(ret, self.value, PTR_BYTE)
+            value_to_byte(ret, self.get_value(), PTR_BYTE)
         
         return ret
 
@@ -79,7 +86,7 @@ class cptr_expression(interface_ptr_expression):
 
 #used for: [a*x+b+....]
 #but now it can only be like : [var_1 * reg + var_2] / [const_1 * reg + const_2]
-class ncptr_expression:
+class ncptr_expression(I_deferred_define):
     ADD_SHIFT = 0
     MUL_SHIFT = 2
     IS_SUB_SHIFT = 4
@@ -152,6 +159,16 @@ class ncptr_expression:
         if variable == self.add: self.add = value
         if variable == self.mul: self.mul = value
         return self.need_variable_define
+
+    #return bool: can to substitute
+    def upd_variable(self, a_name):
+        ret = True#TODO:STOP:HERE
+        if(type(self.mul) == expected_name):
+            if self.mul != a_name.name: return False
+            self.value = a_name.get_value_by_typeof_act(self.variable.typeof_act)
+            return True
+
+        return self.upd_value(a_name.position, a_name.name)
 
     def get_cmd_byte(self): return self.cmd_byte
 

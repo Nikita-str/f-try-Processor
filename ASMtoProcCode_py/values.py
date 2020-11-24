@@ -108,15 +108,30 @@ def is_ptr_reg(s):
     return [IS_PTR_REG, temp[1]]
 
 
-def valid_name(name):
+def valid_name(name, without_name_action = True):
+    from variable_types import TypeofNameAction
     global regs_index
     reg_init()
-    if(len(name) == 0):return(False, 'empty name is unallowable')
-    if(name.upper() in regs_index):return (False, 'that name used for register')
-    if('0'<=name[0] and name[0]<='9'):return (False, "name can't start from number")
+
+    success_ret = TypeofNameAction.PTR
+    err_ret = TypeofNameAction.ERROR
+    len_name = len(name)
+    
+    if not without_name_action and name[len_name - 1] == ')':#so we can check SZ and LEN
+        open_br = name.find('(')
+        if open_br == -1: return (err_ret, "wrong ')' symbol") 
+        act = name[0:open_br]
+        if act == 'LEN': success_ret = TypeofNameAction.LEN
+        elif act == 'SZ': success_ret = TypeofNameAction.SZ
+        else: return (err_ret, "no such action with name: "+act) 
+        name = name[open_br+1:len_name-1]
+    
+    if(len_name == 0):return(err_ret, 'empty name is unallowable')
+    if(name.upper() in regs_index):return (err_ret, 'that name used for register')
+    if('0'<=name[0] and name[0]<='9'):return (err_ret, "name can't start from number")
     for c in name:
         if(('a'<=c and c<='z') or (c=='_') or ('0'<=c and c<='9')): continue
-        return (False, "in name may be only chars from [a..z | 0..9 | _]  error char: '"+c+"'")
-    return (True, '')
+        return (err_ret, "in name may be only chars from [a..z | 0..9 | _]  error char: '"+c+"'")
+    return (success_ret, name)
 
      

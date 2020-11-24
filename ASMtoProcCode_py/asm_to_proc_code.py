@@ -4,11 +4,11 @@ from  cmd_parse import cmd_handler
 from  cmd_parse import get_cmd_prefix
 
 from values import is_num, is_fnum, is_reg, f_value_to_byte, value_to_byte, valid_name, check_value, NOT_REG
-from variable_types import get_variable_type, ALL_VAR_TYPES, SCALAR_VAR_TYPES, NAME_TYPE__VAR, NAME_TYPE__FUNC, NAME_TYPE__LABEL
+from variable_types import get_variable_type, ALL_VAR_TYPES, SCALAR_VAR_TYPES, TypeofName, TypeofNameAction
 
 from class__asm_name import asm_name
 
-from global_variable import check_name, name_substitute
+from global_variable import check_name, name_substitute, exist_expected_names, print_all_expected_names, get_pcode_size
 
 import config
 
@@ -42,11 +42,38 @@ def del_comment(line):
     r = r.split('//')[0]
     return r
 
-def create_header(name_parse_info):#TODO:we need to create header for .#pcode# executable file.
+def create_header(path):#TODO:we need to create header for .#pcode# executable file.
     #it need for compiler/os but not for processor so out it in other file .#pocde# -> .#PARSE_HEADER#
     #first 4byte is - version(for test -5 it is 0(i.e. there is no one section))
-    pass
+    header_file = open(path, "wb")
+    
+    #version 1:
+        #VERSION [4 bytes]
+        #BYTE ENTRY POINT [4 bytes]
+        #SIZE OF PROGRAM [4 bytes]
+        #SIZE OF LEN OF NAME ENTRY POINT[4 bytes] = x_1
+        #ENTRY POINT NAME[x_1 bytes]
+    header_file.write(create_header.version.to_bytes(4, 'little'))#VERSION
+
+    name_entry_point = config.parse_info['entry_point']
+    entry_point_in = 0
+    if name_entry_point:
+        aname = check_name(name_entry_point)
+        entry_point_in = aname.get_value_ptr()
+
+    header_file.write(entry_point_in.to_bytes(4, 'little'))#BYTE ENTRY POINT
+
+    header_file.write(get_pcode_size().to_bytes(4, 'little'))#SIZE OF PROGRAM
+
+    len_of_entry_name = len(name_entry_point)
+    header_file.write(len_of_entry_name.to_bytes(4, 'little'))
+    name_byte = bytearray(); name_byte.extend(map(ord, name_entry_point))
+    header_file.write(name_byte)
+    #end: version 1
+
+    header_file.close()
     return
+create_header.version = 1
 
 def type_of_line(line):
     c = line[0]
@@ -105,8 +132,8 @@ def section_parse(): #TODO:VRODE VSE OK
 def var_parse(var_section_type):
     #global parse_info, asm_file, pcode_file, line, ind_line
 
-    if(var_section_type == VAR__GLOB): name_type = 'glob_vars'
-    else: name_type = 'loc_vars'
+    if(var_section_type == VAR__GLOB): name_type = 'glob_vars'; local = False
+    else: name_type = 'loc_vars'; local = True
 
     if(len(config.line) == 0 and var_section_type == VAR__ONE):
         print('var section must be not empty one-line section!')
@@ -160,7 +187,7 @@ def var_parse(var_section_type):
 
         var_name = words[0]
         check = valid_name(var_name)
-        if(check[0] == False):
+        if check[0] == TypeofNameAction.ERROR:
             print('error: name is not valid   name:'+var_name+'   line:'+str(config.ind_line))
             print(check[1])
             return LINE_TYPE__ERROR     
@@ -251,7 +278,7 @@ def var_parse(var_section_type):
             print('kawo? .-. something weird happen  (did not implement type'+var_type+')')
             return LINE_TYPE__ERROR
 
-        name_for_subst = asm_name(var_name, config.pcode_file.tell(), NAME_TYPE__VAR, var_type, arr_len)#TODO:CHECK:file.tell()
+        name_for_subst = asm_name(var_name, config.pcode_file.tell(), TypeofName.var, local, var_type, arr_len)#TODO:CHECK:file.tell()
         if(len(v_bytes)==0):# or name_for_subst==None):
             print('error (or maybe not ... im not sure actually,  heh)    line:'+str(config.ind_line))
             return LINE_TYPE__ERROR
@@ -377,13 +404,14 @@ def func_parse():
         if(config.parse_info['entry_point'] != None):
             print('error: entry point is already exist '+config.parse_info['entry_point'])
             return LINE_TYPE__ERROR
-    elif(first_char == '+'):func_type = 'glob_funcs'
-    elif(first_char == '-'):func_type = 'loc_funcs'
+        local = False
+    elif(first_char == '+'):func_type = 'glob_funcs'; local = False
+    elif(first_char == '-'):func_type = 'loc_funcs'; local = True
     else: print('error: weird error ... it must be func'); return LINE_TYPE__ERROR
 
     func_name = line[0:i2]
     check = valid_name(func_name)
-    if(check[0] == False):
+    if check[0] == TypeofNameAction.ERROR:
         print('error: name is not valid   name: "'+func_name+'"   line:'+str(config.ind_line))
         print(check[1])
         return LINE_TYPE__ERROR     
@@ -393,7 +421,7 @@ def func_parse():
 
     if(first_char == '!'):config.parse_info['entry_point'] = func_name
 
-    name_for_subst = asm_name(func_name, config.pcode_file.tell(), name_type = NAME_TYPE__FUNC)#TODO:CHECK:file.tell()
+    name_for_subst = asm_name(func_name, config.pcode_file.tell(), TypeofName.func, local)#TODO:CHECK:file.tell()
     name_substitute(name_for_subst)
     config.parse_info[func_type] += [name_for_subst]
     
@@ -422,7 +450,7 @@ def label_parse():
     label_name = line[0:i2]
     
     check = valid_name(label_name)
-    if(check[0] == False):
+    if check[0] == TypeofNameAction.ERROR:
         print('error: name is not valid   name: "'+label_name+'"   line:'+str(config.ind_line))
         print(check[1])
         return LINE_TYPE__ERROR     
@@ -430,7 +458,7 @@ def label_parse():
         print('error: name '+label_name+' already used   line:'+str(config.ind_line))
         return LINE_TYPE__ERROR
 
-    name_for_subst = asm_name(label_name, config.pcode_file.tell(), name_type = NAME_TYPE__LABEL)#TODO:CHECK:file.tell()
+    name_for_subst = asm_name(label_name, config.pcode_file.tell(), TypeofName.label, True)#TODO:CHECK:file.tell()
     name_substitute(name_for_subst)
     config.parse_info['labels'] += [name_for_subst]
     
@@ -472,7 +500,13 @@ def ASM_to_PCode(path_from, path_to = "p.#code#"):
         elif(line_type == LINE_TYPE__ERROR): print('(line: '+str(config.ind_line)+')'); return 1
         else: print('omg... there is not such type of line:  (line: '+str(config.ind_line)+')'); return 1
 
+    if exist_expected_names():
+        print("parsing ended but expected names still exist:")
+        print_all_expected_names()
+        return 1
+        #TODO:error
     #TODO:create header
+    create_header(path_to[:path_to.rfind('.')]+'.#OS_exe_header#')
         
     config.pcode_file.close()
     config.asm_file.close()

@@ -29,9 +29,27 @@ ALL_VALID_VAR_TYPE_NAMES = ALL_VAR_TYPES + \
 def sizeof_variable_type(var_type):
     if(len(var_type) == 4 and var_type[0:3] == 'INT'):return int(var_type[3:])
     if(var_type == 'DOUB'):return 8
+    if(len(var_type) == 5 and var_type[0:3] == 'IARR'):return int(var_type[4:])
+    if(var_type == 'DARR'):return 8   
     #MAYBE:ADD ARRAY ... OR NO(не очень то уж и орно на самом деле)
     return None
 
-NAME_TYPE__VAR  = 1
-NAME_TYPE__FUNC = 2
-NAME_TYPE__LABEL = 3
+class TypeofName:
+    no_one   = 0b00_00_0
+
+    label    = 0b00_00_1
+    func     = 0b00_11_0
+    var      = 0b11_00_0
+    not_var  = 0b00_11_1
+    
+    local    = 0b01_01_1
+
+    any_name = 0b11_11_1
+
+class TypeofNameAction:
+    _min_value = 0
+    ERROR = 0
+    PTR = 1
+    SZ  = 2 #when SZ(x)      only for vars
+    LEN = 3 #when LEN(arr)  only for vars
+    _max_value = 2

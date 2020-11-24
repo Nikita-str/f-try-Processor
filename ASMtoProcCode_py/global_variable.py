@@ -9,6 +9,10 @@ def set_pcode_pos(pos):
 def write_bytes_pcode(arr_bytes):
     config.pcode_file.write(bytearray(arr_bytes))
 
+def get_pcode_size():
+    config.pcode_file.seek(0, 2)
+    return config.pcode_file.tell()
+
 def check_name(name, with_vars = True, with_funcs = True, with_labels = True):
     if with_vars:
         for aname in config.parse_info['loc_vars']:
@@ -36,15 +40,23 @@ def check_name(name, with_vars = True, with_funcs = True, with_labels = True):
     return None
 check_name.last_name_is_local = None
 
-def add_expected_name(name, not_write_bytes):
+def DEL__add_expected_name(name, not_write_bytes):
     pos = get_pcode_pos() + not_write_bytes
     if config.expected_names.get(name):
         config.expected_names[name] += [(pos, config.ind_line)] 
     else:
         config.expected_names[name] = [(pos, config.ind_line)] 
 
+def add_expected_name(exp_name):
+    for name in exp_name.get_need_variable_define():
+        if config.expected_names.get(name):
+            config.expected_names[name] += [(exp_name, config.ind_line)] 
+        else:
+            config.expected_names[name] = [(exp_name, config.ind_line)] 
+        
 
-def add_expected_name_ptr_expression(ptr_expr):
+def add_expected_ptr_expression(ptr_expr):#TODO:DEL
+    return
     for name in ptr_expr.get_need_variable_define():
         if config.expected_ptr_expression.get(name):
             config.expected_ptr_expression[name] += [(ptr_expr, config.ind_line)] 
@@ -55,7 +67,9 @@ def add_expected_name_ptr_expression(ptr_expr):
 def exist_expected_names():
     return (len(config.expected_names) + len(config.expected_ptr_expression)) != 0
 
-def print_all_expected_names():pass
+def print_all_expected_names():
+    for x in config.expected_names:
+        print('"'+ x[0].variable +'"    in line: '+ str(x[1]))
 
 def name_substitute(aname):
     from class__asm_name import asm_name
@@ -67,17 +81,24 @@ def name_substitute(aname):
     name = config.expected_names.get(aname.name)
     if name:
         for x in name:
-            pos = x[0]
-            set_pcode_pos(pos)
-            write_bytes_pcode(aname.ptr_byte_form)
-            change_pos = True
+            exp_name = x[0]
+            if exp_name.is_variable_ok(aname) == False:
+                return [False, "wrong type of name: "+aname.name]
+
+            if exp_name.upd_variable(aname):
+                exp_name.value_substitute()
+                warning = exp_name.warning()
+                if warning: 
+                    print('warning: in line: '+str(x[1])+'   variable: '+name)
+                    print('         ' + warning)
+                change_pos = True
         config.expected_names.pop(aname.name)
 
     name = config.expected_ptr_expression.get(aname.name)
     if name:
         for x in name:
             ptr_expr = x[0]
-            if ptr_expr.update_value(aname.position, name):
+            if ptr_expr.upd_variable(aname):
                 ptr_expr.value_substitute()
                 warning = ptr_expr.warning()
                 if warning: 
@@ -87,5 +108,6 @@ def name_substitute(aname):
         config.expected_ptr_expression.pop(aname.name)
 
     if change_pos: set_pcode_pos(back_pos)
+    return [True]
 
     

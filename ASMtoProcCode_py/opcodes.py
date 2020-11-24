@@ -111,6 +111,7 @@ opcodes = { #not prefix of cmd, but distinct cmd
     'OUT_R'    : 0x3E,
     'OUT_FR'   : 0x3F,
     'OUT_C_STR': 0x40,
+    'OUT_CPTR_C_STR' : 0x51,
 
     #IN:
     'IN_R'     : 0x41,
@@ -129,11 +130,15 @@ opcodes = { #not prefix of cmd, but distinct cmd
     #RET       = 0x4A,
 
     'PASS' : OPCODE_PASS, #TODO:+NEW
+
+    #0x51:OUT_CPTR_C_STR
     }
 
 jump_cmds = {
     'JZ' : 1,  #JUMP IF ZERO
+    'JE' : 1, #JUMP IF EQUAL
     'JNZ' : 2, #JUMP IF NOT ZERO
+    'JNE' : 2, #JUMP IF NOT EQUAL
     'JOF' : 3, #JUMP IF OVERFLOW
     'JAZ' : 4, #JUMP IF ABOVE ZERO
     'JAZZ' : 4,
