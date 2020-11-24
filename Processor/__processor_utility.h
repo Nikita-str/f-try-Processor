@@ -95,11 +95,17 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
 //TODO:memcpy
 uint64_t __read_n(int n, void *ptr)
 {
-    //MAYBE:CHECK THAT n is 1/2/4/8 ?
-    assert(n == 1 || n == 2 || n == 4 || n == 8);
+    //MAYBE:CHECK THAT n is 1/2/4/8 ? or not... for example 3 already use  
+    assert(n == 1 || n == 2 || n == 3 || n == 4 || n == 8);
     uint64_t value = 0;
     memcpy(&value, ptr, n);
     return value;
+}
+
+//not use
+inline void __write_value_n(int n, uint64_t value, void *ptr)
+{
+    memcpy(ptr, &value, n);
 }
 
 inline double __d_read_n(void *ptr)
@@ -107,6 +113,12 @@ inline double __d_read_n(void *ptr)
     double value = 0;
     memcpy(&value, ptr, sizeof(double));
     return value;
+}
+
+//not use
+inline void __d_write_value(double value, void *ptr)
+{
+    memcpy(ptr, &value, sizeof(double));
 }
 
 
@@ -121,6 +133,15 @@ uint64_t get_reg_value(struct __proc_reg pr)
     }
 }
 
+void upd_reg_flags(struct __proc_reg pr, uint64_t value)
+{
+    pr.flags_ptr[0] = 0;
+    int ind = pr.reg_bytes - 1;
+    if (!(value & REG_B_MASKS[ind]))pr.flags_ptr[0] |= FL_Z;
+    if (value & REG_B_INV_MASKS[ind])pr.flags_ptr[0] |= FL_OF; //TODO : WE CANT CATCH OVERFLOW WITH 8byte-reg in that way ://
+    if (value & REG_LAST_BIT_MASKS[ind])pr.flags_ptr[0] |= FL_AZ;
+}
+
 void set_reg_value(struct __proc_reg pr, uint64_t value)
 {
     switch (pr.reg_bytes) {
@@ -131,11 +152,7 @@ void set_reg_value(struct __proc_reg pr, uint64_t value)
     default: assert("error");
     }
 
-    pr.flags_ptr[0] = 0;
-    int ind = pr.reg_bytes - 1;
-    if (!(value & REG_B_MASKS[ind]))pr.flags_ptr[0] |= FL_Z;
-    if(value & REG_B_INV_MASKS[ind])pr.flags_ptr[0] |= FL_OF; //TODO : WE CANT CATCH OVERFLOW WITH 8byte-reg in that way ://
-    if (value & REG_LAST_BIT_MASKS[ind])pr.flags_ptr[0] |= FL_AZ;
+    upd_reg_flags(pr, value);
 }
 
 
@@ -144,12 +161,17 @@ inline double get_f_reg_value(struct __proc_reg pr)
     return ((double *)pr.reg_ptr)[0];
 }
 
+inline void upd_freg_flags(struct __proc_reg pr, double value)
+{
+    pr.flags_ptr[0] = 0;
+    if (DoubleEqualZero(value))pr.flags_ptr[0] |= FL_Z;
+    if (DoubleAboveZero(value))pr.flags_ptr[0] |= FL_AZ;
+}
+
 inline void set_f_reg_value(struct __proc_reg pr, double value)
 {
     ((double *)pr.reg_ptr)[0] = value;
-    pr.flags_ptr[0] = 0;
-    if(DoubleEqualZero(value))pr.flags_ptr[0] |= FL_Z;
-    if(DoubleAboveZero(value))pr.flags_ptr[0] |= FL_AZ;
+    upd_freg_flags(pr, value);
 }
 
 /// <summary> </summary>
@@ -168,4 +190,33 @@ _Bool proc_check_condition(uint64_t flags, uint8_t if_byte)
     case JIF_LEZ: return !(flags & FL_AZ);
     }
     return 0;
+}
+
+proc_ptr_t get_not_const_ptr(uint8_t cmd_get_not_const_ptr_byte, Processor *proc, proc_ptr_t *instead_rip, enum PROC_CMD_ERROR *error)
+{
+    *error = NO_ERROR;
+    static const uint8_t no_such_cmd = 0b11110000;
+    if (cmd_get_not_const_ptr_byte & no_such_cmd) { *error = NO_SUCH_CMD; return 0; }//0 is valid address
+    uint8_t byte_for_add = cmd_get_not_const_ptr_byte & 0b0011;
+    uint8_t byte_for_mul = (cmd_get_not_const_ptr_byte & 0b1100) >> 2;
+    proc_ptr_t mul = 1;
+    proc_ptr_t add = 0;
+
+    //read ptr reg:
+    uint8_t reg_byte = __read_n(sizeof(reg_byte), proc->mem.memory + *instead_rip);
+    (*instead_rip) += sizeof(reg_byte);
+    struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
+    if (pr.reg_error) {*error = REG_ERROR; return 0; }
+    if (pr.reg_bytes != REG_PTR) { *error = NO_REG_PTR; return 0; }
+
+    if (byte_for_mul) {//read mul
+        mul = __read_n(byte_for_mul, proc->mem.memory + *instead_rip);
+        (*instead_rip) += byte_for_mul;
+    }
+    if (byte_for_add) {//read add
+        add = __read_n(byte_for_add, proc->mem.memory + *instead_rip);
+        (*instead_rip) += byte_for_add;
+    }
+
+    return mul * get_reg_value(pr) + add;
 }

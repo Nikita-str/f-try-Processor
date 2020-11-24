@@ -1,0 +1,6 @@
+=vars:
+x WORD 125
+=code:
+MOV eax, 100
+MOV [x], ax
+MOV [x], eax // error: WORD != INT

@@ -9,7 +9,7 @@
 
 PROC_CMD_ERROR processor_next_cmd(Processor *proc)
 {
-    int64_t rip = proc->reg.RIP;
+    proc_ptr_t rip = proc->reg.RIP;
     uint8_t cmd[PROC_MAX_CMD_LEN] = {0};
     {
         uint8_t add_rip = 0;
@@ -26,6 +26,8 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         } while (moreByte);
     }
 
+    #define read_value_from_ptr(bytes, ptr) __read_n(bytes, proc->mem.memory + ptr);
+    #define read_double_from_ptr(ptr) __d_read_n(proc->mem.memory + ptr);
     #define read_type(type) __read_n(sizeof(type), proc->mem.memory + rip); rip += sizeof(type);
     #define read_reg() read_type(uint8_t);
     #define read_byte() read_type(uint8_t);
@@ -214,6 +216,36 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         goto RETURN;
     }
 
+    #define help_ASMD_INT(m_ADD, m_SUB, m_MUL, m_DIV, pr_op_1, op_2)    \
+    if ((cmd[0] == m_DIV) && (op_2 == 0))return DIV_ZERO_ERROR;         \
+    if ((cmd[0] == m_MUL) && (pr_op_1.reg_bytes != REG_8B))pr_op_1.reg_bytes += 1; \
+    uint64_t op_1 = get_reg_value(pr_op_1);                             \
+    switch (cmd[0]) {                                                   \
+    case m_ADD: op_1 = op_1 + op_2; break;                              \
+    case m_SUB: op_1 = op_1 - op_2; break;                              \
+    case m_MUL: op_1 = op_1 * op_2; break;                              \
+    case m_DIV: op_1 = op_1 / op_2; break;                              \
+    }                                                                   \
+    set_reg_value(pr_op_1, op_1);
+
+    #define help_ASMD_INT_postfix(postfix, pr_op_1, op_2) \
+    help_ASMD_INT(ADD##postfix, SUB##postfix, MUL##postfix, DIV##postfix, pr_op_1, op_2)
+
+    #define help_ASMD_DOUB(m_ADD, m_SUB, m_MUL, m_DIV, pr_op_1, op_2)   \
+    if ((cmd[0] == m_DIV) && DoubleEqualZero(op_2))return DIV_ZERO_ERROR;\
+    double op_1 = get_f_reg_value(pr_op_1);                             \
+    switch (cmd[0]) {                                                   \
+    case m_ADD: op_1 = op_1 + op_2; break;                              \
+    case m_SUB: op_1 = op_1 - op_2; break;                              \
+    case m_MUL: op_1 = op_1 * op_2; break;                              \
+    case m_DIV: op_1 = op_1 / op_2; break;                              \
+    }                                                                   \
+    set_f_reg_value(pr_op_1, op_1);
+
+    #define help_ASMD_DOUB_postfix(postfix, pr_op_1, op_2) \
+    help_ASMD_DOUB(ADD##postfix, SUB##postfix, MUL##postfix, DIV##postfix, pr_op_1, op_2)
+
+
     case ADD_REG_VAL:
     case SUB_REG_VAL:
     case MUL_REG_VAL:
@@ -225,17 +257,8 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         uint8_t value_byte_len = 1 << (pr.reg_bytes - 1);
 
         uint64_t value = read_n(value_byte_len);
-        if ((cmd[0] == DIV_REG_VAL) && (value == 0))return DIV_ZERO_ERROR;
-        if ((cmd[0] == MUL_REG_VAL) && (pr.reg_bytes != REG_8B))pr.reg_bytes += 1;
-        uint64_t reg_now_value = get_reg_value(pr);//((uint64_t *)pr.reg_ptr)[0];
-        switch (cmd[0]) {
-        case ADD_REG_VAL: value = reg_now_value + value; break;
-        case SUB_REG_VAL: value = reg_now_value - value; break;
-        case MUL_REG_VAL: value = ((int64_t)reg_now_value) * (int64_t)value; break;
-        case DIV_REG_VAL: value = ((int64_t)reg_now_value) / (int64_t)value; break;
-        }
-        //((uint64_t *)pr.reg_ptr)[0] = value;
-        set_reg_value(pr, value);
+
+        help_ASMD_INT_postfix(_REG_VAL, pr, value);
         goto RETURN;
     }
 
@@ -253,18 +276,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         if (pr_2.reg_error)return REG_ERROR;
         uint64_t reg_2_value = get_reg_value(pr_2);
 
-        if ((cmd[0] == DIV_REG_REG) && (reg_2_value == 0))return DIV_ZERO_ERROR;
-        if ((cmd[0] == MUL_REG_REG) && (pr.reg_bytes != REG_8B))pr.reg_bytes += 1;
-
-        uint64_t reg_now_value = get_reg_value(pr);//((uint64_t *)pr.reg_ptr)[0];//get_reg_value?
-        switch (cmd[0]) {
-        case ADD_REG_REG: reg_now_value = reg_now_value + reg_2_value; break;
-        case SUB_REG_REG: reg_now_value = reg_now_value - reg_2_value; break;
-        case MUL_REG_REG: reg_now_value = ((int64_t)reg_now_value) * (int64_t)reg_2_value; break;
-        case DIV_REG_REG: reg_now_value = ((int64_t)reg_now_value) / (int64_t)reg_2_value; break;
-        }
-        //((uint64_t *)pr.reg_ptr)[0] = reg_now_value;
-        set_reg_value(pr, reg_now_value);
+        help_ASMD_INT_postfix(_REG_REG, pr, reg_2_value);
         goto RETURN;
     }
 
@@ -278,16 +290,8 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         if (pr.reg_error)return REG_ERROR;
 
         double value = read_double();
-        if ((cmd[0] == DIV_F_REG_VAL) && DoubleEqualZero(value))return DIV_ZERO_ERROR;
 
-        double reg_now_value = get_f_reg_value(pr);
-        switch (cmd[0]) {
-        case ADD_F_REG_VAL: value = reg_now_value + value; break;
-        case SUB_F_REG_VAL: value = reg_now_value - value; break;
-        case MUL_F_REG_VAL: value = ((int64_t)reg_now_value) * (int64_t)value; break;
-        case DIV_F_REG_VAL: value = ((int64_t)reg_now_value) / (int64_t)value; break;
-        }
-        set_f_reg_value(pr, value);
+        help_ASMD_DOUB_postfix(_F_REG_VAL, pr, value);
         goto RETURN;
     }
 
@@ -305,18 +309,89 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         if (pr_2.reg_error)return REG_ERROR;
         double reg_2_value = get_f_reg_value(pr_2);
 
-        if ((cmd[0] == DIV_REG_REG) && (reg_2_value == 0))return DIV_ZERO_ERROR;
-
-        double reg_now_value = get_f_reg_value(pr);
-        switch (cmd[0]) {
-        case ADD_F_REG_REG: reg_now_value = reg_now_value + reg_2_value; break;
-        case SUB_F_REG_REG: reg_now_value = reg_now_value - reg_2_value; break;
-        case MUL_F_REG_REG: reg_now_value = reg_now_value * reg_2_value; break;
-        case DIV_F_REG_REG: reg_now_value = reg_now_value / reg_2_value; break;
-        }
-        set_f_reg_value(pr, reg_now_value);
+        help_ASMD_DOUB_postfix(_F_REG_REG, pr, reg_2_value);
         goto RETURN;
     }
+
+    //TODO:CHECK:NEW
+    case ADD_REG_CONST_PTR:
+    case SUB_REG_CONST_PTR:
+    case MUL_REG_CONST_PTR:
+    case DIV_REG_CONST_PTR:
+    //TODO:CHECK:NEW
+    case ADD_REG_NOT_CONST_PTR:
+    case SUB_REG_NOT_CONST_PTR:
+    case MUL_REG_NOT_CONST_PTR:
+    case DIV_REG_NOT_CONST_PTR:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        proc_ptr_t ptr = 0;
+        bool const_ptr = (cmd[0] == ADD_REG_CONST_PTR || cmd[0] == SUB_REG_CONST_PTR ||
+                          cmd[0] == MUL_REG_CONST_PTR || cmd[0] == DIV_REG_CONST_PTR);
+
+        if (const_ptr) { //CONST PTR
+            ptr = read_type(proc_ptr_t);
+        } else { //NOT CONST PTR
+            PROC_CMD_ERROR error = NO_ERROR;
+            ptr = get_not_const_ptr(cmd[1], proc, &rip, &error);
+            if (error != NO_ERROR)return error;
+        }
+
+        uint8_t value_byte_len = 1 << (pr.reg_bytes - 1);
+        uint64_t value = read_value_from_ptr(value_byte_len, ptr);
+
+        if (const_ptr) {//CONST PTR
+            help_ASMD_INT_postfix(_REG_CONST_PTR, pr, value);
+        } else {//NOT CONST PTR
+            help_ASMD_INT_postfix(_REG_NOT_CONST_PTR, pr, value);
+        }
+        goto RETURN;
+    }
+
+    //TODO:CHECK:NEW
+    case ADD_FREG_CONST_PTR:
+    case SUB_FREG_CONST_PTR:
+    case MUL_FREG_CONST_PTR:
+    case DIV_FREG_CONST_PTR:
+    //TODO:CHECK:NEW
+    case ADD_FREG_NOT_CONST_PTR:
+    case SUB_FREG_NOT_CONST_PTR:
+    case MUL_FREG_NOT_CONST_PTR:
+    case DIV_FREG_NOT_CONST_PTR:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(fGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        proc_ptr_t ptr = 0;
+        bool const_ptr = (cmd[0] == ADD_FREG_CONST_PTR || cmd[0] == SUB_FREG_CONST_PTR ||
+                          cmd[0] == MUL_FREG_CONST_PTR || cmd[0] == DIV_FREG_CONST_PTR);
+
+        if (const_ptr) { //CONST PTR
+            ptr = read_type(proc_ptr_t);
+        } else { //NOT CONST PTR
+            PROC_CMD_ERROR error = NO_ERROR;
+            ptr = get_not_const_ptr(cmd[1], proc, &rip, &error);
+            if (error != NO_ERROR)return error;
+        }
+
+        double value = read_double_from_ptr(ptr);
+
+        if (const_ptr) {//CONST PTR
+            help_ASMD_DOUB_postfix(_FREG_CONST_PTR, pr, value);
+        } else {//NOT CONST PTR
+            help_ASMD_DOUB_postfix(_FREG_NOT_CONST_PTR, pr, value);
+        }
+        goto RETURN;
+    }
+
+    #undef help_ASMD_INT_postfix
+    #undef help_ASMD_DOUB_postfix
+    #undef help_ASMD_INT
+    #undef help_ASMD_DOUB
 
     case MOV_REG_VAL:
     {
@@ -403,6 +478,72 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         goto RETURN;
     }
 
+    //TODO:CHECK:NEW
+    case MOV_REG_CONST_PTR:
+    case MOV_REG_NOT_CONST_PTR:
+    //TODO:CHECK:NEW
+    case MOV_FREG_CONST_PTR:
+    case MOV_FREG_NOT_CONST_PTR:
+    {
+        bool is_freg = cmd[0] == MOV_FREG_CONST_PTR || cmd[0] == MOV_FREG_NOT_CONST_PTR;
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(is_freg ? fGP : iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        proc_ptr_t ptr = 0;
+        if (cmd[0] == MOV_REG_CONST_PTR || cmd[0] == MOV_FREG_CONST_PTR) { // CONST PTR
+            ptr = read_type(proc_ptr_t);
+        } else { // NOT CONST PTR
+            PROC_CMD_ERROR error = NO_ERROR;
+            ptr = get_not_const_ptr(cmd[1], proc, &rip, &error);
+            if (error != NO_ERROR)return error;
+        }
+
+
+        if (is_freg) {
+            double value = read_double_from_ptr(ptr);
+            set_f_reg_value(pr, value);
+        } else {
+            uint8_t value_byte_len = 1 << (pr.reg_bytes - 1);
+            uint64_t value = read_value_from_ptr(value_byte_len, ptr);
+            set_reg_value(pr, value);
+        }
+        goto RETURN;
+    }
+
+    //TODO:CHECK:NEW
+    case MOV_CONST_PTR_REG:
+    case MOV_NOT_CONST_PTR_REG:
+    //TODO:CHECK:NEW
+    case MOV_CONST_PTR_FREG:
+    case MOV_NOT_CONST_PTR_FREG:
+    {
+        bool is_freg = cmd[0] == MOV_CONST_PTR_FREG || cmd[0] == MOV_NOT_CONST_PTR_FREG;
+
+        proc_ptr_t ptr = 0;
+        if (cmd[0] == MOV_CONST_PTR_REG || cmd[0] == MOV_CONST_PTR_FREG) { // CONST PTR
+            ptr = read_type(proc_ptr_t);
+        } else { // NOT CONST PTR
+            PROC_CMD_ERROR error = NO_ERROR;
+            ptr = get_not_const_ptr(cmd[1], proc, &rip, &error);
+            if (error != NO_ERROR)return error;
+        }
+
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(is_freg ? fGP : iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        if (is_freg) {
+            double value = get_f_reg_value(pr);
+            memcpy(proc->mem.memory + ptr, &value, sizeof(double));
+        } else {
+            uint8_t value_byte_len = 1 << (pr.reg_bytes - 1);
+            uint64_t value = get_reg_value(pr);
+            memcpy(proc->mem.memory + ptr, &value, value_byte_len);
+        }
+        goto RETURN;
+    }
+
     case JUMP_ADDR:
     {
         proc_ptr_t ptr = read_type(proc_ptr_t);
@@ -438,6 +579,35 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         uint64_t flags = proc->reg.FLAGS;
         if (proc_check_condition(flags, if_byte)) {
             proc->reg.RIP += delta_ptr;
+            goto RETURN_WO_CHANGE_RIP;
+        }
+        goto RETURN;
+    }
+
+    case JUMP_ADDR_REG://TODO:CHECK
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        if (pr.reg_bytes != REG_PTR)return NO_REG_PTR;
+
+        proc->reg.RIP = (proc_ptr_t)get_reg_value(pr);
+        goto RETURN_WO_CHANGE_RIP;
+    }
+    case JUMP_IF_ADDR_REG://TODO:CHECK
+    {
+        uint8_t if_byte = read_byte();
+        if (if_byte < JIF_MIN_VALID || if_byte > JIF_MAX_VALID)return NO_SUCH_JUMP_IF;
+
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+        if (pr.reg_bytes != REG_PTR)return NO_REG_PTR;
+
+        uint64_t flags = proc->reg.FLAGS;
+        if (proc_check_condition(flags, if_byte)) {
+            proc->reg.RIP = (proc_ptr_t)get_reg_value(pr);
             goto RETURN_WO_CHANGE_RIP;
         }
         goto RETURN;
@@ -499,6 +669,17 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         goto RETURN;
     }
 
+    case OUT_CONST_PTR_C_STRING:
+    {
+        proc_ptr_t ptr = read_type(proc_ptr_t);
+
+        uint8_t str_len = read_value_from_ptr(1, ptr);
+        ptr += 1;
+        char *c_ptr = (char*)(proc->mem.memory + ptr);
+        printf("%.*s", str_len, c_ptr);
+        goto RETURN;
+    }
+
     case IN_REG:
     {
         uint8_t reg_byte = read_reg();
@@ -530,6 +711,61 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         return CMD_EXIT;
     }
 
+    case CMP_REG_VAL:
+    case CMP_REG_REG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        uint64_t reg_value = get_reg_value(pr);
+        uint64_t cmp = 0;
+        uint64_t sub = 0;
+
+        if (cmd[0] == CMP_REG_VAL) {
+            uint8_t value_byte_len = 1 << (pr.reg_bytes - 1);
+            cmp = read_n(value_byte_len);
+        } else if (cmd[0] == CMP_REG_REG) {
+            reg_byte = read_reg();
+            struct __proc_reg pr_2 = processor_reg_get_ptr(iGP, reg_byte, proc);
+            if (pr_2.reg_error)return REG_ERROR;
+            cmp = get_reg_value(pr_2);
+        } else return FUTURE_ERROR;
+
+        sub = reg_value - cmp;
+        upd_reg_flags(pr, sub);
+
+        goto RETURN;
+    }
+
+    case CMP_FREG_VAL:
+    case CMP_FREG_FREG:
+    {
+        uint8_t reg_byte = read_reg();
+        struct __proc_reg pr = processor_reg_get_ptr(fGP, reg_byte, proc);
+        if (pr.reg_error)return REG_ERROR;
+
+        double reg_value = get_f_reg_value(pr);
+        double cmp = 0;
+        double sub = 0;
+
+        if (cmd[0] == CMP_FREG_VAL) {
+            cmp = read_double();
+        } else if (cmd[0] == CMP_FREG_FREG) {
+            reg_byte = read_reg();
+            struct __proc_reg pr_2 = processor_reg_get_ptr(fGP, reg_byte, proc);
+            if (pr_2.reg_error)return REG_ERROR;
+            cmp = get_f_reg_value(pr_2);
+        } else return FUTURE_ERROR;
+
+        sub = reg_value - cmp;
+        upd_freg_flags(pr, sub);
+
+        goto RETURN;
+    }
+
+    case PASS: rip += 1; goto RETURN;
+
     default:
         return NO_SUCH_CMD;
     }
@@ -539,6 +775,8 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     #undef read_byte
     #undef read_reg
     #undef read_type
+    #undef read_value_from_ptr
+    #undef read_double_from_ptr
 
     #undef get_c_string_ptr
 
@@ -585,6 +823,16 @@ void processor_free(Processor *proc, _Bool memory_free)
     free(proc);
 }
 
+void processor_mem_map(Processor *proc, proc_ptr_t position, uint8_t *mem_for_map, size_t map_bytes, _Bool set_next_cmd_on_mapped_mem)
+{
+    memcpy(proc->mem.memory + position, mem_for_map, map_bytes);
+    if (set_next_cmd_on_mapped_mem) proc->reg.RIP = proc->mem.memory + position;
+}
+
+proc_ptr_t processor_set_next_cmd(Processor *proc, proc_ptr_t shift_from_mem_start)
+{
+    return proc->reg.RIP = proc->mem.memory + shift_from_mem_start;
+}
 
 void processor_output_error_code(PROC_CMD_ERROR error_code)
 {
@@ -615,6 +863,9 @@ void processor_output_error_code(PROC_CMD_ERROR error_code)
         break;
     case IN_ERROR:
         printf("incorrect data was entered\n");
+        break;
+    case NO_REG_PTR:
+        printf("wrong register for ptr\n");
         break;
     default:
         printf("Unknown error\n");

@@ -1,0 +1,2 @@
+if you will run .cmd files from back directory then you need that dir (or change .cmd file)
+so i leave this file here just for git copy this directory

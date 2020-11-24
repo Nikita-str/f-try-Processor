@@ -3,4 +3,5 @@ python3.8 asm_to_proc_code.py tests\test_2.txt pcodes\2.#pcode#
 python3.8 asm_to_proc_code.py tests\test_3.txt pcodes\3.#pcode#
 python3.8 asm_to_proc_code.py tests\test_4.txt pcodes\4.#pcode#
 python3.8 asm_to_proc_code.py tests\test_5.txt pcodes\5.#pcode#
+python3.8 asm_to_proc_code.py tests\test_6.txt pcodes\6.#pcode#
 cmd
