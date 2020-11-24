@@ -210,15 +210,6 @@ enum FREG
     FCX,
     FDX,
 
-};
-
-enum REG_BYTES
-{
-    REG_1B = 0x1, 
-    REG_2B = 0x2, 
-    REG_4B = 0x3, 
-    REG_8B = 0x4, 
-
     #define x(n) FR##n
 
     x(0),
@@ -240,6 +231,14 @@ enum REG_BYTES
 
     #undef x
 
+};
+
+enum REG_BYTES
+{
+    REG_1B = 0x1, 
+    REG_2B = 0x2, 
+    REG_4B = 0x3, 
+    REG_8B = 0x4, 
 };
 
 static const uint64_t REG_1B_MASK = 0xFF;
@@ -271,12 +270,14 @@ enum JUMP_IFS
 {
     JIF_MIN_VALID = 1,
     JIF_Z = 1,//ZERO
-    JIF_NZ,//NOT ZERO
-    JIF_OF,//OVERFLOW
-    JIF_AZ,//ABOVE ZERO
-    JIF_AEZ,//ABOVE OR EQUAL ZERO
-    JIF_LZ,//LESS THAN ZERO
-    JIF_LEZ,//LESS OR EQUAL ZERO
+    JIF_E = 1,//EQUAL
+    JIF_NZ = 2,//NOT ZERO
+    JIF_NE = 2,//NOT EQUAL
+    JIF_OF = 3,//OVERFLOW
+    JIF_AZ = 4,//ABOVE ZERO
+    JIF_AEZ = 5,//ABOVE OR EQUAL ZERO
+    JIF_LZ = 6,//LESS THAN ZERO
+    JIF_LEZ = 7,//LESS OR EQUAL ZERO
 
     JIF_MAX_VALID = 7,
 

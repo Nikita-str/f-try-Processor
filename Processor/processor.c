@@ -26,8 +26,6 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         } while (moreByte);
     }
 
-    printf("cmd: %x\n", (int)(cmd[0]));//TODO:DEL
-
     #define read_value_from_ptr(bytes, ptr) __read_n(bytes, proc->mem.memory + ptr);
     #define read_double_from_ptr(ptr) __d_read_n(proc->mem.memory + ptr);
     #define read_type(type) __read_n(sizeof(type), proc->mem.memory + rip); rip += sizeof(type);
@@ -668,6 +666,17 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         char *c_ptr = get_c_string_ptr();
         printf("%.*s", str_len, c_ptr);
         rip += str_len;
+        goto RETURN;
+    }
+
+    case OUT_CONST_PTR_C_STRING:
+    {
+        proc_ptr_t ptr = read_type(proc_ptr_t);
+
+        uint8_t str_len = read_value_from_ptr(1, ptr);
+        ptr += 1;
+        char *c_ptr = (char*)(proc->mem.memory + ptr);
+        printf("%.*s", str_len, c_ptr);
         goto RETURN;
     }
 

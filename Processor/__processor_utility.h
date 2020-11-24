@@ -95,7 +95,7 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
 //TODO:memcpy
 uint64_t __read_n(int n, void *ptr)
 {
-    //MAYBE:CHECK THAT n is 1/2/4/8 ? or not... for example 3 already use
+    //MAYBE:CHECK THAT n is 1/2/4/8 ? or not... for example 3 already use  
     assert(n == 1 || n == 2 || n == 3 || n == 4 || n == 8);
     uint64_t value = 0;
     memcpy(&value, ptr, n);
