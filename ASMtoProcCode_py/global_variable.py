@@ -68,8 +68,9 @@ def exist_expected_names():
     return (len(config.expected_names) + len(config.expected_ptr_expression)) != 0
 
 def print_all_expected_names():
-    for x in config.expected_names:
-        print('"'+ x[0].variable +'"    in line: '+ str(x[1]))
+    for name in config.expected_names:
+        for x in config.expected_names[name]:
+            print('"'+ name +'"    in line: '+ str(x[1]))
 
 def name_substitute(aname):
     from class__asm_name import asm_name

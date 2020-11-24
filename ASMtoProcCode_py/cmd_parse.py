@@ -197,11 +197,12 @@ def DIV_cmd(ops, cmd=""): return ASMD_cmd_help(ops, cmd, 'DIV')
 
 def num_help(num_op, reg_bytes, opcodes_prev, opcodes_past, byte_shift = None):
     temp = valid_name(num_op, False)
+
     typeof_act = temp[0]
     if typeof_act != TypeofNameAction.ERROR:
         value = temp[1]
         temp = check_name(value)
-        v_bytes = opcodes_prev#[opcodes["MOV_RV"], is_reg_1[1]]
+        v_bytes = opcodes_prev
         if(temp != None): 
             value = temp.get_value_by_typeof_act(typeof_act)
             value_to_byte(v_bytes, value, reg_bytes)
@@ -229,11 +230,12 @@ def num_help(num_op, reg_bytes, opcodes_prev, opcodes_past, byte_shift = None):
 def MOV_cmd(ops, cmd=""):
     if(cmd != ""): return ERR_CMD
     op_len = len(ops)
+
     if(op_len > 2):
         return TOO_MANY_PARAMS
     if(op_len < 2):
         return TOO_FEW_PARAMS
-    
+
     op_1 = ops[0]
     if is_str_ptr(op_1):
         is_reg_2 = is_reg(ops[1])
