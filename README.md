@@ -122,13 +122,15 @@
 ASMtoProcCode_py/compile_tests.cmd - для компиляции тестовых программ из ASMtoProcCode_py/tests/ в ASMtoProcCode_py/pcodes/  
 ASMtoProcCode_py/error_test.cmd - для примера не завиршаемых компиляций из-за ошибок из ASMtoProcCode_py/tests/ в ASMtoProcCode_py/pcodes/  
 В случае если это не работает на Linux или если у вас другая версия питона, попрбуйте ввести в терминале:  
-python[ver] asm_to_proc_code.py tests\test_[n_test].txt pcodes\[n_test].#pcode#  
-python[ver] asm_to_proc_code.py tests\error_[n_err].txt pcodes\not_compile.#pcode#  
+python[ver] asm_to_proc_code.py tests/test_[n_test].txt pcodes/[n_test].#pcode#  
+python[ver] asm_to_proc_code.py tests/error_[n_err].txt pcodes/not_compile.#pcode#  
+например: python3 asm_to_proc_code.py tests/test_6.txt pcodes/6.#pcode#  
 ну или выбирете другие имена и дериктории.  
-#### процессор(C):  
-наверное, в скором времени я добавлю makefile.  
+#### процессор(C):    
 Если у вас есть VisualStudio то просто оздайте проект и добавьте все заголовочные файлы и файлы с исходным кодом в соответствующие директории.   
+Если у вас linux то в папке есть makefile запустите его, должно скомпилироваться.
 
-
+## Входные параметры:  
+Для процессора путь к файлу .#pcode#, если при его компиляции был сгенерирован .#OS_exe_header# файл, то оставьте его рядом с файлом .#pcode# т.к. если точка входа находится не в начале программы, программа начнет выполняться не с того места, что является ошибкой.    
 
 
