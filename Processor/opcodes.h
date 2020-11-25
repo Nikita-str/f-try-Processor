@@ -41,12 +41,10 @@ enum OpCode_1_byte
     ADD_REG_REG = 0x13,// 2 operand: ADD reg1, reg2 := reg1 = reg1 + reg2 
     ADD_F_REG_VAL = 0x14,//2 operand: ADD f_reg, (double)x
     ADD_F_REG_REG = 0x15,//2 operand: ADD f_reg, f_reg
-    #pragma region NOW N.T REALISED +++
     ADD_REG_CONST_PTR = 0x16, // ADD eax, [4*x + 3]
     ADD_REG_NOT_CONST_PTR = OpCodeOneMoreByte | ADD_REG_CONST_PTR, // ADD eax, [4*ecx + 3]
     ADD_FREG_CONST_PTR = 0x17,
     ADD_FREG_NOT_CONST_PTR = OpCodeOneMoreByte | ADD_FREG_CONST_PTR,
-    #pragma endregion
 
     SUB = 0x18, // 0 operand : x = POP, y = POP, PUSH x-y
     SUB_F, // 0 operand : x = POP_F, y = POP_F, PUSH_F x-y
@@ -54,12 +52,10 @@ enum OpCode_1_byte
     SUB_REG_REG = 0x1B,// 2 operand: SUB reg1, reg2 := reg1 = reg1 - reg2 
     SUB_F_REG_VAL = 0x1C,//2 operand: SUB f_reg, (double)x
     SUB_F_REG_REG = 0x1D,//2 operand: SUB f_reg, f_reg
-    #pragma region NOW N.T REALISED +++
     SUB_REG_CONST_PTR = 0x1E, // SUB eax, [4*x + 3]
     SUB_REG_NOT_CONST_PTR = OpCodeOneMoreByte | SUB_REG_CONST_PTR, // SUB eax, [4*ecx + 3]
     SUB_FREG_CONST_PTR = 0x1F,
     SUB_FREG_NOT_CONST_PTR = OpCodeOneMoreByte | SUB_FREG_CONST_PTR,
-    #pragma endregion
 
     MUL = 0x20, // 0 operand : x = POP, y = POP, PUSH (first 32)(x*y); PUSH (x*y) >> 32;
     MUL_F, // 0 operand : x = POP_F, y = POP_F, PUSH_F x*y
@@ -67,12 +63,10 @@ enum OpCode_1_byte
     MUL_REG_REG = 0x23,// 2 operand: MUL reg1, reg2 := reg1 = reg1 * reg2 
     MUL_F_REG_VAL = 0x24,//2 operand: MUL f_reg, (double)x
     MUL_F_REG_REG = 0x25,//2 operand: MUL f_reg, f_reg
-    #pragma region NOW N.T REALISED +++
     MUL_REG_CONST_PTR = 0x26, // MUL eax, [4*x + 3]
     MUL_REG_NOT_CONST_PTR = OpCodeOneMoreByte | MUL_REG_CONST_PTR, // MUL eax, [4*ecx + 3]
     MUL_FREG_CONST_PTR = 0x27,
     MUL_FREG_NOT_CONST_PTR = OpCodeOneMoreByte | MUL_FREG_CONST_PTR,
-    #pragma endregion
 
     DIV = 0x28, // 0 operand : x = POP, y = POP, PUSH x/y
     DIV_F, // 0 operand : x = POP_F, y = POP_F, PUSH_F x/y
@@ -80,12 +74,10 @@ enum OpCode_1_byte
     DIV_REG_REG = 0x2B,// 2 operand: MUL reg1, reg2 := reg1 = reg1 / reg2 
     DIV_F_REG_VAL = 0x2C,//2 operand: MUL f_reg, (double)x
     DIV_F_REG_REG = 0x2D,//2 operand: MUL f_reg, f_reg
-    #pragma region NOW N.T REALISED +++
     DIV_REG_CONST_PTR = 0x2E, // DIV eax, [4*x + 3]
     DIV_REG_NOT_CONST_PTR = OpCodeOneMoreByte | DIV_REG_CONST_PTR, // DIV eax, [4*ecx + 3]
     DIV_FREG_CONST_PTR = 0x2F,
     DIV_FREG_NOT_CONST_PTR = OpCodeOneMoreByte | DIV_FREG_CONST_PTR,
-    #pragma endregion
 
     MOV_REG_VAL = 0x30,
     MOV_F_REG_VAL,
@@ -93,26 +85,21 @@ enum OpCode_1_byte
     MOV_FREG_FREG,
     MOV_REG_FREG,
     MOV_FREG_REG,
-    #pragma region NOW N.T REALISED +++
     MOV_REG_CONST_PTR = 0x36, // MOV eax, [4*x + 3]
     MOV_REG_NOT_CONST_PTR = OpCodeOneMoreByte | MOV_REG_CONST_PTR, // MOV eax, [4*ecx + 3]
     MOV_FREG_CONST_PTR = 0x37,
     MOV_FREG_NOT_CONST_PTR = OpCodeOneMoreByte | MOV_FREG_CONST_PTR,
-    
     MOV_CONST_PTR_REG = 0x4E, // MOV [x], eax
     MOV_CONST_PTR_FREG = 0x4F, 
     MOV_NOT_CONST_PTR_REG = OpCodeOneMoreByte | MOV_CONST_PTR_REG, // MOV [eax], ecx   ? MOV W[2*eax+3], ecx
     MOV_NOT_CONST_PTR_FREG = OpCodeOneMoreByte | MOV_CONST_PTR_FREG,//MOV [eax], edx
-    #pragma endregion
 
     JUMP_DIFF = 0x38, // 1 [(ptrdiff_t) | int32_t] operand
     JUMP_ADDR, // 1 ptr operand
     JUMP_IF_DIFF, //the condition is set by the next byte 
     JUMP_IF_ADDR, //the condition is set by the next byte
-    #pragma region NOW N.T REALISED +++
     JUMP_ADDR_REG = 0x4C, //JUMP EAX
     JUMP_IF_ADDR_REG = 0x4D,//JZ ECX
-    #pragma endregion
 
     INC_REG = 0x3C,
     DEC_REG,
@@ -125,12 +112,10 @@ enum OpCode_1_byte
 
     HLT,
 
-    #pragma region NOW N.T REALISED +++
     CMP_REG_VAL = 0x44,
     CMP_REG_REG = 0x45,
     CMP_FREG_VAL = 0x46,
     CMP_FREG_FREG = 0x47,
-    #pragma endregion
 
     #pragma region NOW NOT REALISED
     CALL_ADDR = 0x48,
@@ -143,13 +128,9 @@ enum OpCode_1_byte
     R_E_S_E_R_V_E_D__MOV_CONST_PTR_REG = 0x4E,
     R_E_S_E_R_V_E_D__MOV_CONST_PTR_FREG = 0x4F,
 
-    #pragma region NOW N.T REALISED +++
     PASS = 0x50,
-    #pragma endregion
 
-    #pragma region NOW NOT REALISED
     OUT_CONST_PTR_C_STRING = 0x51, // OUT [next_line]
-    #pragma endregion
 };
 
 
