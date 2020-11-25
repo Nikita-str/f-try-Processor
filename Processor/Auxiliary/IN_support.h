@@ -2,6 +2,7 @@
 #ifdef __cplusplus
 #include <iostream>
 #include <cstdint>
+#include <limits>
 #else
 #include <stdint.h>
 #endif

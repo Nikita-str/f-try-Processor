@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include "opcodes.h"
+#include "processor.h"
+#include "Auxiliary/generic_function.h"
 
 struct __proc_reg
 {
@@ -92,7 +94,6 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
     #undef x
 }
 
-//TODO:memcpy
 uint64_t __read_n(int n, void *ptr)
 {
     //MAYBE:CHECK THAT n is 1/2/4/8 ? or not... for example 3 already use  
@@ -103,12 +104,12 @@ uint64_t __read_n(int n, void *ptr)
 }
 
 //not use
-inline void __write_value_n(int n, uint64_t value, void *ptr)
+static inline void __write_value_n(int n, uint64_t value, void *ptr)
 {
     memcpy(ptr, &value, n);
 }
 
-inline double __d_read_n(void *ptr)
+static inline double __d_read_n(void *ptr)
 {
     double value = 0;
     memcpy(&value, ptr, sizeof(double));
@@ -116,7 +117,7 @@ inline double __d_read_n(void *ptr)
 }
 
 //not use
-inline void __d_write_value(double value, void *ptr)
+static inline void __d_write_value(double value, void *ptr)
 {
     memcpy(ptr, &value, sizeof(double));
 }
@@ -156,19 +157,19 @@ void set_reg_value(struct __proc_reg pr, uint64_t value)
 }
 
 
-inline double get_f_reg_value(struct __proc_reg pr)
+static inline double get_f_reg_value(struct __proc_reg pr)
 {
     return ((double *)pr.reg_ptr)[0];
 }
 
-inline void upd_freg_flags(struct __proc_reg pr, double value)
+static inline void upd_freg_flags(struct __proc_reg pr, double value)
 {
     pr.flags_ptr[0] = 0;
     if (DoubleEqualZero(value))pr.flags_ptr[0] |= FL_Z;
     if (DoubleAboveZero(value))pr.flags_ptr[0] |= FL_AZ;
 }
 
-inline void set_f_reg_value(struct __proc_reg pr, double value)
+static inline void set_f_reg_value(struct __proc_reg pr, double value)
 {
     ((double *)pr.reg_ptr)[0] = value;
     upd_freg_flags(pr, value);
@@ -199,24 +200,24 @@ proc_ptr_t get_not_const_ptr(uint8_t cmd_get_not_const_ptr_byte, Processor *proc
     if (cmd_get_not_const_ptr_byte & no_such_cmd) { *error = NO_SUCH_CMD; return 0; }//0 is valid address
     uint8_t byte_for_add = cmd_get_not_const_ptr_byte & 0b0011;
     uint8_t byte_for_mul = (cmd_get_not_const_ptr_byte & 0b1100) >> 2;
-    proc_ptr_t mul = 1;
-    proc_ptr_t add = 0;
+    uint32_t mul = 1;
+    uint32_t add = 0;
 
     //read ptr reg:
-    uint8_t reg_byte = __read_n(sizeof(reg_byte), proc->mem.memory + *instead_rip);
+    uint8_t reg_byte = (uint8_t)__read_n(sizeof(reg_byte), (void *)(proc->mem.memory + *instead_rip));
     (*instead_rip) += sizeof(reg_byte);
     struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
     if (pr.reg_error) {*error = REG_ERROR; return 0; }
     if (pr.reg_bytes != REG_PTR) { *error = NO_REG_PTR; return 0; }
 
     if (byte_for_mul) {//read mul
-        mul = __read_n(byte_for_mul, proc->mem.memory + *instead_rip);
+        mul = (uint32_t)__read_n(byte_for_mul, (void *)(proc->mem.memory + *instead_rip));
         (*instead_rip) += byte_for_mul;
     }
     if (byte_for_add) {//read add
-        add = __read_n(byte_for_add, proc->mem.memory + *instead_rip);
+        add = (uint32_t)__read_n(byte_for_add, (void *)(proc->mem.memory + *instead_rip));
         (*instead_rip) += byte_for_add;
     }
 
-    return mul * get_reg_value(pr) + add;
+    return (proc_ptr_t)(mul * get_reg_value(pr) + add);
 }

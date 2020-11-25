@@ -1,5 +1,7 @@
 #include "OS.h"
 
+OS_exe_header os_headers[1];
+
 size_t get_size_of_file(FILE *f)
 {
     long size = fseek(f, 0, SEEK_END);
@@ -56,18 +58,20 @@ OS_exe_header parse_header(const char *file_name)
     fread(&ret.len_of_entry_point_name, sizeof(ret.len_of_entry_point_name), 1, f);
     if (ferror(f)) goto BAD_END;
 
-    char *entry_point_name = (char *)calloc(ret.len_of_entry_point_name+1, sizeof(*entry_point_name));
-    if (!entry_point_name) {
+    if (ret.len_of_entry_point_name == 0) return ret;
+
+    ret.entry_point_name = (char *)calloc(ret.len_of_entry_point_name+1, sizeof(*ret.entry_point_name));
+    if (!ret.entry_point_name) {
         printf("error with memory allocate [BEFORE PROCCESSOR EXECUTION]\n");
         return bad_ret;
     }
 
-    fread(entry_point_name, sizeof(*entry_point_name), ret.len_of_entry_point_name, f);
-    entry_point_name[ret.len_of_entry_point_name] = '\0';
+    fread(ret.entry_point_name, sizeof(*ret.entry_point_name), ret.len_of_entry_point_name, f);
     if (ferror(f)) {
-        free(entry_point_name);
+        free(ret.entry_point_name);
         goto BAD_END;
     }
+    ret.entry_point_name[ret.len_of_entry_point_name] = '\0';
 
     fclose(f);
     return ret;

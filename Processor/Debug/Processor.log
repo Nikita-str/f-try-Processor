@@ -1,0 +1,3 @@
+﻿  processor.c
+C:\Users\newmy\Desktop\prog\C\ISP\Processor\Processor\processor.c(676,1): warning C4244: инициализация: преобразование "uint64_t" в "uint8_t", возможна потеря данных
+  Processor.vcxproj -> C:\Users\newmy\Desktop\prog\C\ISP\Processor\Debug\Processor.exe

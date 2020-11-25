@@ -915,7 +915,7 @@ if(*gs_error != GS_VALID)return;
 #endif
 
 
-#undef GS_ALLOC_EXIT()     
+#undef GS_ALLOC_EXIT  
 
 static
 generic_stack(GENERIC_STACK_TYPE) new_generic_stack(GENERIC_STACK_TYPE) (size_t capacity GS_LAST_PARAM)

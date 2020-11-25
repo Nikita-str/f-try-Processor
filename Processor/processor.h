@@ -10,7 +10,6 @@ typedef int64_t i2proc_t;
 typedef uint32_t proc_ptr_t;
 typedef int32_t proc_delta_ptr_t;
 
-
 #include "Stack/GenericStackSetEmptyConfig.h"
 #define WITHOUT_AUTO_CHECK_VALID
 #define GENERIC_STACK_TYPE iproc_t
@@ -126,7 +125,7 @@ typedef struct Memory
 {
     generic_stack(iproc_t) stack; // ?  
     generic_stack(double) stack_f; // ?  
-    const uint8_t *memory; 
+    uint8_t *memory; 
     //TODO: size of memory
     //TODO:
     //MAYBE:DO:MEMORY WITH FLAGS ? (EXECUTE / ...) 

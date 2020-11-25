@@ -26,18 +26,18 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         } while (moreByte);
     }
 
-    #define read_value_from_ptr(bytes, ptr) __read_n(bytes, proc->mem.memory + ptr);
-    #define read_double_from_ptr(ptr) __d_read_n(proc->mem.memory + ptr);
-    #define read_type(type) __read_n(sizeof(type), proc->mem.memory + rip); rip += sizeof(type);
+    #define read_value_from_ptr(bytes, ptr) __read_n(bytes, (void *)(proc->mem.memory + ptr));
+    #define read_double_from_ptr(ptr) __d_read_n((void *)(proc->mem.memory + ptr));
+    #define read_type(type) (type)__read_n(sizeof(type), (void *)(proc->mem.memory + rip)); rip += sizeof(type);
     #define read_reg() read_type(uint8_t);
     #define read_byte() read_type(uint8_t);
     #define read_iproc() read_type(iproc_t);
 
     #define get_c_string_ptr() ((char *)(proc->mem.memory + rip));
 
-    #define read_double() __d_read_n(proc->mem.memory + rip); rip += sizeof(double);
+    #define read_double() __d_read_n((void *)(proc->mem.memory + rip)); rip += sizeof(double);
 
-    #define read_n(n) __read_n(n, proc->mem.memory + rip); rip += n;
+    #define read_n(n) __read_n(n, (void *)(proc->mem.memory + rip)); rip += n;
 
     switch (cmd[0]) {
     case PUSH_4:
@@ -62,7 +62,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     case PUSH_F:
     {
         double elem = 0;
-        uint64_t *ptr_elem = &elem;
+        double *ptr_elem = &elem;
         *ptr_elem = read_double(); 
         generic_stack_push(double)(proc->stack_f, elem);
         goto RETURN;
@@ -218,7 +218,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
 
     #define help_ASMD_INT(m_ADD, m_SUB, m_MUL, m_DIV, pr_op_1, op_2)    \
     if ((cmd[0] == m_DIV) && (op_2 == 0))return DIV_ZERO_ERROR;         \
-    if ((cmd[0] == m_MUL) && (pr_op_1.reg_bytes != REG_8B))pr_op_1.reg_bytes += 1; \
+    if ((cmd[0] == m_MUL) && (pr_op_1.reg_bytes != REG_8B))pr_op_1.reg_bytes += (enum REG_BYTES)1; \
     uint64_t op_1 = get_reg_value(pr_op_1);                             \
     switch (cmd[0]) {                                                   \
     case m_ADD: op_1 = op_1 + op_2; break;                              \
@@ -318,7 +318,6 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     case SUB_REG_CONST_PTR:
     case MUL_REG_CONST_PTR:
     case DIV_REG_CONST_PTR:
-    //TODO:CHECK:NEW
     case ADD_REG_NOT_CONST_PTR:
     case SUB_REG_NOT_CONST_PTR:
     case MUL_REG_NOT_CONST_PTR:
@@ -356,7 +355,6 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     case SUB_FREG_CONST_PTR:
     case MUL_FREG_CONST_PTR:
     case DIV_FREG_CONST_PTR:
-    //TODO:CHECK:NEW
     case ADD_FREG_NOT_CONST_PTR:
     case SUB_FREG_NOT_CONST_PTR:
     case MUL_FREG_NOT_CONST_PTR:
@@ -481,7 +479,6 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     //TODO:CHECK:NEW
     case MOV_REG_CONST_PTR:
     case MOV_REG_NOT_CONST_PTR:
-    //TODO:CHECK:NEW
     case MOV_FREG_CONST_PTR:
     case MOV_FREG_NOT_CONST_PTR:
     {
@@ -514,7 +511,6 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     //TODO:CHECK:NEW
     case MOV_CONST_PTR_REG:
     case MOV_NOT_CONST_PTR_REG:
-    //TODO:CHECK:NEW
     case MOV_CONST_PTR_FREG:
     case MOV_NOT_CONST_PTR_FREG:
     {
@@ -584,7 +580,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         goto RETURN;
     }
 
-    case JUMP_ADDR_REG://TODO:CHECK
+    case JUMP_ADDR_REG:
     {
         uint8_t reg_byte = read_reg();
         struct __proc_reg pr = processor_reg_get_ptr(iGP, reg_byte, proc);
@@ -673,7 +669,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
     {
         proc_ptr_t ptr = read_type(proc_ptr_t);
 
-        uint8_t str_len = read_value_from_ptr(1, ptr);
+        uint8_t str_len = (uint8_t)read_value_from_ptr(1, ptr);
         ptr += 1;
         char *c_ptr = (char*)(proc->mem.memory + ptr);
         printf("%.*s", str_len, c_ptr);
@@ -687,7 +683,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         if (pr.reg_error)return REG_ERROR;
 
         int64_t value = 0;
-        if (IN_read_int64(&value))return IN_ERROR; //TODO: or we can try again ....
+        if (IN_read_int64(&value))return IN_ERROR;
         
         set_reg_value(pr, value);
         goto RETURN;
@@ -700,7 +696,7 @@ PROC_CMD_ERROR processor_next_cmd(Processor *proc)
         if (pr.reg_error)return REG_ERROR;
 
         double value = 0;
-        if (IN_read_double(&value))return IN_ERROR; //TODO: or we can try again ....
+        if (IN_read_double(&value))return IN_ERROR;
         
         set_f_reg_value(pr, value);
         goto RETURN;
@@ -826,12 +822,12 @@ void processor_free(Processor *proc, _Bool memory_free)
 void processor_mem_map(Processor *proc, proc_ptr_t position, uint8_t *mem_for_map, size_t map_bytes, _Bool set_next_cmd_on_mapped_mem)
 {
     memcpy(proc->mem.memory + position, mem_for_map, map_bytes);
-    if (set_next_cmd_on_mapped_mem) proc->reg.RIP = proc->mem.memory + position;
+    if (set_next_cmd_on_mapped_mem) proc->reg.RIP = position;
 }
 
 proc_ptr_t processor_set_next_cmd(Processor *proc, proc_ptr_t shift_from_mem_start)
 {
-    return proc->reg.RIP = proc->mem.memory + shift_from_mem_start;
+    return proc->reg.RIP = shift_from_mem_start;
 }
 
 void processor_output_error_code(PROC_CMD_ERROR error_code)
