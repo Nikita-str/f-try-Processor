@@ -63,11 +63,11 @@ processor_reg_get_ptr(uint8_t type_of_reg, uint8_t reg_byte, Processor *proc)
     {
         enum REG_BYTES bytes = REG_8B;
         switch (reg_byte) {
-            #define c(reg_dist_char) case reg_dist_char: return (x) { &(proc->reg.##reg_dist_char), &(proc->reg.FLAGS), bytes, REG_OK };
-            c(FAX);
-            c(FBX);
-            c(FCX);
-            c(FDX);
+            #define c(r) case F##r##X: return (x) { &(proc->reg.F##r##X), &(proc->reg.FLAGS), bytes, REG_OK };
+            c(A);
+            c(B);
+            c(C);
+            c(D);
             #undef c
             #define c(n) case FR##n: return (x) { &(proc->reg.FR##n), &(proc->reg.FLAGS), bytes, REG_OK };
             c(0);
